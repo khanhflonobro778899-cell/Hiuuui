@@ -10901,55 +10901,122 @@ task.spawn(function()
 end)
 Window:SelectTab(1)
 local ScreenGui = Instance.new("ScreenGui")
-local MainButton = Instance.new("TextButton")
+local ToggleButton = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
-local UIStroke = Instance.new("UIStroke")
+local UIStroke = Instance.new("UIStroke") -- Thêm viền cho sắc nét
 
--- Cấu hình ScreenGui (Gắn vào CoreGui để không bị mất khi chết)
+-- Cấu hình ScreenGui
 ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "FluentToggleUI"
+ScreenGui.Name = "MenuToggleSystem"
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Nút Bấm chính (Đen Tuyệt Đối - Cực tương phản)
-MainButton.Parent = ScreenGui
-MainButton.Name = "ToggleButton"
-MainButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Đen đậm nhất
-MainButton.BackgroundTransparency = 0.1
-MainButton.Position = UDim2.new(0.05, 0, 0.15, 0)
-MainButton.Size = UDim2.new(0, 60, 0, 60)
-MainButton.Draggable = true
-MainButton.Active = true
+-- Cấu hình Nút Bấm (Hình Tròn - Đen Đậm)
+ToggleButton.Parent = ScreenGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10) -- Đen đậm
+ToggleButton.Position = UDim2.new(0.12, 0, 0.09, 0)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50) -- Kích thước vuông để tạo hình tròn
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "ON" -- Rút gọn chữ để vừa hình tròn
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 14
+ToggleButton.Draggable = true 
+ToggleButton.Active = true
 
--- Chữ (Trắng Tinh - GothamBold)
-MainButton.Text = "ON"
-MainButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- Trắng cực trắng
-MainButton.Font = Enum.Font.GothamBold
-MainButton.TextSize = 18
+-- Bo góc thành hình tròn
+UICorner.Parent = ToggleButton
+UICorner.CornerRadius = UDim.new(1, 0) -- Bo tròn hoàn toàn
 
--- Làm nút hình tròn
-UICorner.Parent = MainButton
-UICorner.CornerRadius = UDim.new(1, 0)
-
--- Viền trắng mờ sang trọng
-UIStroke.Parent = MainButton
+-- Thêm viền trắng mỏng cho chuyên nghiệp
+UIStroke.Parent = ToggleButton
 UIStroke.Color = Color3.fromRGB(255, 255, 255)
-UIStroke.Thickness = 2.5
-UIStroke.Transparency = 0.6
+UIStroke.Thickness = 1.5
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- Sự kiện Click để điều khiển Menu Fluent trong file của bạn
-MainButton.MouseButton1Click:Connect(function()
-    -- Gửi tín hiệu phím "End" để bật/tắt menu chính
-    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.End, false, game)
-    game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.End, false, game)
+-- Biến trạng thái
+local menuVisible = true
+
+ToggleButton.MouseButton1Click:Connect(function()
+    menuVisible = not menuVisible
     
-    -- Cập nhật giao diện nút bấm
-    if MainButton.Text == "ON" then
-        MainButton.Text = "OFF"
-        MainButton.TextColor3 = Color3.fromRGB(150, 150, 150) -- Trắng xám khi tắt
-        MainButton.BackgroundTransparency = 0.4
+    if menuVisible then
+        ToggleButton.Text = "ON"
+        ToggleButton.BackgroundTransparency = 0
+        UIStroke.Transparency = 0
     else
-        MainButton.Text = "ON"
-        MainButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- Trắng tinh khi bật
-        MainButton.BackgroundTransparency = 0.1
+        ToggleButton.Text = "OFF"
+        ToggleButton.BackgroundTransparency = 0.4 -- Mờ nhẹ khi tắt
+        UIStroke.Transparency = 0.4
+    end
+
+    -- Kích hoạt phím tắt (End)
+    local vim = game:GetService("VirtualInputManager")
+    vim:SendKeyEvent(true, Enum.KeyCode.End, false, game)
+    vim:SendKeyEvent(false, Enum.KeyCode.End, false, game)
+end)
+-- 1. Định nghĩa các biến cấu hình (Nếu script của bạn chưa có)
+local MAX_RANGE = 60 -- Khoảng cách quái có thể đánh tới
+local ATTACK_SPEED = 0.05 -- Tốc độ đánh (càng thấp càng nhanh)
+_G.FastAttack = true -- Mặc định bật chạy ngầm khi chạy script
+
+-- 2. Hàm tìm mục tiêu gần nhất
+local function GetTarget()
+    local char = game.Players.LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+    
+    local charPos = char.HumanoidRootPart.Position
+    local closest, dist = nil, MAX_RANGE
+    
+    -- Ưu tiên tìm trong folder Enemies trước, nếu không có thì tìm trong workspace
+    local folder = workspace:FindFirstChild("Enemies") or workspace
+    
+    for _, v in pairs(folder:GetChildren()) do
+        if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+            local d = (charPos - v.HumanoidRootPart.Position).Magnitude
+            if d <= dist then
+                dist = d
+                closest = v
+            end
+        end
+    end
+    return closest
+end
+
+-- 3. Logic Fast Attack tối ưu
+local function FastAttackLogic()
+    if not _G.FastAttack then return end
+    
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    
+    local target = GetTarget()
+    if target then
+        local tool = char:FindFirstChildOfClass("Tool")
+        -- Chỉ đánh khi đang cầm vũ khí trên tay
+        if tool then 
+            pcall(function()
+                -- Tự động kích hoạt tool (chém)
+                tool:Activate() 
+                
+                -- Gửi Remote sát thương (Net)
+                local net = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Net")
+                net["RE/RegisterAttack"]:FireServer(0)
+                net["RE/RegisterHit"]:FireServer(target.HumanoidRootPart, {target.HumanoidRootPart})
+            end)
+        end
+    end
+end
+
+-- 4. Chạy vòng lặp ngầm (Task) - Luôn chạy xuyên suốt
+task.spawn(function()
+    while true do
+        -- Tốc độ lặp lại dựa trên ATTACK_SPEED
+        task.wait(ATTACK_SPEED)
+        
+        -- Dùng pcall để nếu có lỗi (như khi chết hoặc quái mất tích) script không bị dừng
+        if _G.FastAttack then
+            pcall(function()
+                FastAttackLogic()
+            end)
+        end
     end
 end)
