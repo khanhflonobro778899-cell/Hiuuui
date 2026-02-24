@@ -10899,22 +10899,56 @@ task.spawn(function()
         end)
     end)
 end)
+-- 1. Tạo giao diện nút bấm
+local ScreenGui = Instance.new("ScreenGui")
+local ToggleButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local UIStroke = Instance.new("UIStroke")
+
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "ScriptToggleButton"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+ToggleButton.Parent = ScreenGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ToggleButton.Position = UDim2.new(0.12, 0, 0.09, 0) -- Vị trí góc trên bên trái
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "ON"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 14
+ToggleButton.Draggable = true 
+ToggleButton.Active = true
+
+UICorner.Parent = ToggleButton
+UICorner.CornerRadius = UDim.new(1, 0) -- Làm nút hình tròn
+
+UIStroke.Parent = ToggleButton
+UIStroke.Color = Color3.fromRGB(0, 255, 127) -- Viền xanh lá neon
+UIStroke.Thickness = 2
+
+-- 2. Logic bật/tắt menu bằng phím ảo
+local menuVisible = true
+local vim = game:GetService("VirtualInputManager")
+
 ToggleButton.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     
     if menuVisible then
         ToggleButton.Text = "ON"
-        ToggleButton.BackgroundTransparency = 0
-        UIStroke.Transparency = 0
+        ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        UIStroke.Color = Color3.fromRGB(0, 255, 127)
     else
         ToggleButton.Text = "OFF"
-        ToggleButton.BackgroundTransparency = 0.4
-        UIStroke.Transparency = 0.4
+        ToggleButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+        UIStroke.Color = Color3.fromRGB(255, 0, 0) -- Viền đỏ khi tắt
     end
 
-    -- Đổi Enum.KeyCode.End thành Enum.KeyCode.RightControl
-    local vim = game:GetService("VirtualInputManager")
+    -- Gửi phím RightControl để đóng/mở menu của script chính
     vim:SendKeyEvent(true, Enum.KeyCode.RightControl, false, game)
-    wait(0.05)
+    task.wait(0.05)
     vim:SendKeyEvent(false, Enum.KeyCode.RightControl, false, game)
 end)
+
+-- 3. Chạy script chính của bạn ở dưới đây
+-- Dán toàn bộ nội dung của file scriptmoinhat.lua.txt vào sau dòng này
