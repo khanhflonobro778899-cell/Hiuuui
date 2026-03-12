@@ -10170,12 +10170,10 @@ task.spawn(function()
 end)
 _G.AutoAttack = true 
 
-V496:AddToggle({
+v496:AddToggle({
     Name = "Fast Attack",
     Default = true,
-    Callback = function(v) 
-        _G.AutoAttack = v 
-    end
+    Callback = function(v) _G.AutoAttack = v end
 })
 
 -- 2. Hệ thống xử lý (Giữ nguyên logic bạn gửi)
