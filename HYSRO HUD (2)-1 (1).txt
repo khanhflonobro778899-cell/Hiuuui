@@ -7507,6 +7507,30 @@ spawn(function()
 end)
 
 local _ = v489:AddSection({"Volcanic Island"})
+v489:AddToggle({
+    Name = "Delete Lava",
+    Description = "",
+    Default = false,
+    Callback = function(v1141)
+        _G.RemoveLava = v1141
+    end
+})
+spawn(function()
+    while task.wait(1) do
+        if _G.RemoveLava then
+            for _, v1143 in pairs(workspace:GetDescendants()) do
+                do
+                    local l_v1143_0 = v1143
+                    if l_v1143_0:IsA("BasePart") and string.lower(l_v1143_0.Name):find("lava") then
+                        pcall(function()
+                            l_v1143_0:Destroy()
+                        end)
+                    end
+                end
+            end
+        end
+    end
+end)
 v489:AddButton({
     Title = "Craft Volcanic Magnet",
     Value = false,
@@ -10147,16 +10171,16 @@ end)
 _G.AutoAttack = true 
 
 V496:AddToggle({
-    Name = "Fast Attack (Anti-Ban)",
+    Name = "Fast Attack",
     Default = true,
     Callback = function(v) 
         _G.AutoAttack = v 
     end
 })
 
--- CẤU HÌNH HỆ THỐNG FAST ATTACK
-local MAX_RANGE = 60 -- Khoảng cách tối đa
-local ATTACK_CAP = 0.015 -- Giới hạn tốc độ đánh (tránh crash/kick)
+-- 2. Hệ thống xử lý (Giữ nguyên logic bạn gửi)
+local MAX_RANGE = 60 
+local ATTACK_CAP = 0.015 
 local lastAttack = 0
 
 local RunService = game:GetService("RunService")
@@ -10176,75 +10200,65 @@ for _, p in pairs({ReplicatedStorage:FindFirstChild("Util"), ReplicatedStorage:F
     end
 end
 
--- VÒNG LẶP XỬ LÝ SÁT THƯƠNG
-RunService.Stepped:Connect(function()
-    if not _G.AutoAttack or not lPlayer.Character then return end
-    
-    -- Kiểm soát tốc độ đánh
-    if tick() - lastAttack < ATTACK_CAP then return end
-    lastAttack = tick()
+-- Vòng lặp xử lý sát thương (Dùng task.spawn để không làm treo script chính)
+task.spawn(function()
+    RunService.Stepped:Connect(function()
+        if not _G.AutoAttack or not lPlayer.Character then return end
+        if tick() - lastAttack < ATTACK_CAP then return end
+        lastAttack = tick()
 
-    local char = lPlayer.Character
-    local root = char:FindFirstChild("HumanoidRootPart")
-    local tool = char:FindFirstChildOfClass("Tool")
-    
-    -- Kiểm tra vũ khí trên tay
-    if not (root and tool and (tool:GetAttribute("WeaponType") or tool:FindFirstChild("Handle"))) then return end
+        local char = lPlayer.Character
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local tool = char:FindFirstChildOfClass("Tool")
+        
+        if not (root and tool and (tool:GetAttribute("WeaponType") or tool:FindFirstChild("Handle"))) then return end
 
-    local hitList = {}
-    local targetsFolder = {workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("Characters")}
-    
-    -- Quét mục tiêu xung quanh (Tối đa 5 mục tiêu để giảm lag)
-    local count = 0
-    for i = 1, #targetsFolder do
-        if targetsFolder[i] then
-            for _, e in pairs(targetsFolder[i]:GetChildren()) do
-                local er = e:FindFirstChild("HumanoidRootPart")
-                local eh = e:FindFirstChild("Humanoid")
-                
-                if e ~= char and eh and eh.Health > 0 and er then
-                    local dist = (er.Position - root.Position).Magnitude
-                    if dist <= MAX_RANGE and count < 5 then
-                        count = count + 1
-                        table.insert(hitList, {e, er})
-                        if e:FindFirstChild("Head") then
-                            table.insert(hitList, {e, e.Head})
+        local hitList = {}
+        local targetsFolder = {workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("Characters")}
+        
+        local count = 0
+        for i = 1, #targetsFolder do
+            if targetsFolder[i] then
+                for _, e in pairs(targetsFolder[i]:GetChildren()) do
+                    local er = e:FindFirstChild("HumanoidRootPart")
+                    local eh = e:FindFirstChild("Humanoid")
+                    
+                    if e ~= char and eh and eh.Health > 0 and er then
+                        local dist = (er.Position - root.Position).Magnitude
+                        if dist <= MAX_RANGE and count < 5 then
+                            count = count + 1
+                            table.insert(hitList, {e, er})
+                            if e:FindFirstChild("Head") then
+                                table.insert(hitList, {e, e.Head})
+                            end
                         end
                     end
                 end
             end
         end
-    end
 
-    -- Thực thi gửi Packet sát thương lên Server
-    if #hitList > 0 then
-        local targetHead = hitList[1][1]:FindFirstChild("Head") or hitList[1][2]
-        
-        pcall(function()
-            -- 1. Hiệu ứng vung kiếm (Client)
-            tool:Activate()
+        if #hitList > 0 then
+            local targetHead = hitList[1][1]:FindFirstChild("Head") or hitList[1][2]
+            pcall(function()
+                tool:Activate()
+                Net["RE/RegisterAttack"]:FireServer()
+                Net["RE/RegisterHit"]:FireServer(targetHead, hitList, {}, "")
 
-            -- 2. Đăng ký đòn đánh
-            Net["RE/RegisterAttack"]:FireServer()
-
-            -- 3. Gửi sát thương
-            Net["RE/RegisterHit"]:FireServer(targetHead, hitList, {}, "")
-
-            -- 4. Bypass nâng cao cho bản cập nhật mới
-            if u4 then
-                task.spawn(function()
-                    local s = Net.seed:InvokeServer()
-                    if s then
-                        local name = ("RE/RegisterHit"):gsub(".", function(c) 
-                            return string.char(bit32.bxor(c:byte(), math.floor(workspace:GetServerTimeNow() / 10 % 10) + 1)) 
-                        end)
-                        local fire = (cloneref and cloneref(u4)) or u4
-                        fire:FireServer(name, bit32.bxor(u5 + 909090, s * 2), targetHead, hitList)
-                    end
-                end)
-            end
-        end)
-    end
+                if u4 then
+                    task.spawn(function()
+                        local s = Net.seed:InvokeServer()
+                        if s then
+                            local name = ("RE/RegisterHit"):gsub(".", function(c) 
+                                return string.char(bit32.bxor(c:byte(), math.floor(workspace:GetServerTimeNow() / 10 % 10) + 1)) 
+                            end)
+                            local fire = (cloneref and cloneref(u4)) or u4
+                            fire:FireServer(name, bit32.bxor(u5 + 909090, s * 2), targetHead, hitList)
+                        end
+                    end)
+                end
+            end)
+        end
+    end)
 end)
 v496:AddToggle({
     Name = "Bring Mob",
@@ -10341,30 +10355,6 @@ end)
 if l_LocalPlayer_18.Character then
 	v1135(l_LocalPlayer_18.Character)
 end
-v496:AddToggle({
-    Name = "Delete Lava",
-    Description = "",
-    Default = false,
-    Callback = function(v1141)
-        _G.RemoveLava = v1141
-    end
-})
-spawn(function()
-    while task.wait(1) do
-        if _G.RemoveLava then
-            for _, v1143 in pairs(workspace:GetDescendants()) do
-                do
-                    local l_v1143_0 = v1143
-                    if l_v1143_0:IsA("BasePart") and string.lower(l_v1143_0.Name):find("lava") then
-                        pcall(function()
-                            l_v1143_0:Destroy()
-                        end)
-                    end
-                end
-            end
-        end
-    end
-end)
 
 v496:AddToggle({
     Title = "Auto Active Race V3",
