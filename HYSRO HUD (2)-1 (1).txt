@@ -3793,75 +3793,6 @@ local v494 = v466:MakeTab({"Visual", "user"})
 local v495 = v466:MakeTab({"Shop", "shoppingCart"})
 local v496 = v466:MakeTab({"Misc", "settings"}) 
 local v_music = v466:MakeTab({"Music", "music"})
-
-
-local playlist = {
-    ["Music 1"] = "rbxassetid://110919391228823",
-    ["Music 2"] = "rbxassetid://110788401793874",
-    ["Music 3"] = "rbxassetid://118507373399694",
-    ["Music 4"] = "rbxassetid://130437050908450",
-    ["Music 5"] = "rbxassetid://1840776993",
-    ["Music 6"] = "rbxassetid://142376088",
-    ["Music 7"] = "rbxassetid://1846088038",
-    ["Music 8"] = "rbxassetid://1848354536",
-    ["Music 9"] = "rbxassetid://120011175571061",
-    ["Music 10"] = "rbxassetid://111172243066964",
-    ["Music 11"] = "rbxassetid://9045765634",
-    ["Music 12"] = "rbxassetid://6198220635",
-    ["Music 13"] = "rbxassetid://5409360995",
-    ["Music 14"] = "rbxassetid://99152674992699",
-    ["Music 15"] = "rbxassetid://89357977537699",
-    ["Music 16"] = "rbxassetid://87488015719562"
-}
-
-local songNames = {}
-for i = 1, 16 do table.insert(songNames, "Music "..i) end
-
--- Sound Object Setup
-local sound = game.Workspace:FindFirstChild("HysroMusic") or Instance.new("Sound", game.Workspace)
-sound.Name = "HysroMusic"
-sound.Volume = 0.5
-sound.Looped = true
-
-vMusic:AddSection({"Music Player"})
-
--- Song Selection
-vMusic:AddDropdown({
-    Name = "Select Song",
-    Options = songNames,
-    Default = "Music 1",
-    Callback = function(Value)
-        sound.SoundId = playlist[Value]
-        if sound.IsPlaying then
-            sound:Play()
-        end
-    end
-})
-
--- Play/Stop Toggle
-vMusic:AddToggle({
-    Name = "Enable Music",
-    Default = false,
-    Callback = function(Value)
-        if Value then
-            if sound.SoundId == "" then sound.SoundId = playlist["Music 1"] end
-            sound:Play()
-        else
-            sound:Stop()
-        end
-    end
-})
-
--- Volume Control
-vMusic:AddSlider({
-    Name = "Volume",
-    Min = 0,
-    Max = 10,
-    Default = 5,
-    Callback = function(Value)
-        sound.Volume = Value / 10
-    end
-})
 _G.SelectWeapon = "Melee"
 task.spawn(function()
     while task.wait() do
@@ -10793,7 +10724,73 @@ function GetNewServer()
         return Servers[math.random(1, #Servers)]
     end
 end
+local playlist = {
+    ["Music 1"] = "rbxassetid://110919391228823",
+    ["Music 2"] = "rbxassetid://110788401793874",
+    ["Music 3"] = "rbxassetid://118507373399694",
+    ["Music 4"] = "rbxassetid://130437050908450",
+    ["Music 5"] = "rbxassetid://1840776993",
+    ["Music 6"] = "rbxassetid://142376088",
+    ["Music 7"] = "rbxassetid://1846088038",
+    ["Music 8"] = "rbxassetid://1848354536",
+    ["Music 9"] = "rbxassetid://120011175571061",
+    ["Music 10"] = "rbxassetid://111172243066964",
+    ["Music 11"] = "rbxassetid://9045765634",
+    ["Music 12"] = "rbxassetid://6198220635",
+    ["Music 13"] = "rbxassetid://5409360995",
+    ["Music 14"] = "rbxassetid://99152674992699",
+    ["Music 15"] = "rbxassetid://89357977537699",
+    ["Music 16"] = "rbxassetid://87488015719562"
+}
 
+local songNames = {}
+for i = 1, 16 do table.insert(songNames, "Music "..i) end
+
+-- Sound Object Setup
+local sound = game.Workspace:FindFirstChild("HysroMusic") or Instance.new("Sound", game.Workspace)
+sound.Name = "HysroMusic"
+sound.Volume = 0.5
+sound.Looped = true
+
+vMusic:AddSection({"Music Player"})
+
+-- Song Selection
+vMusic:AddDropdown({
+    Name = "Select Song",
+    Options = songNames,
+    Default = "Music 1",
+    Callback = function(Value)
+        sound.SoundId = playlist[Value]
+        if sound.IsPlaying then
+            sound:Play()
+        end
+    end
+})
+
+-- Play/Stop Toggle
+vMusic:AddToggle({
+    Name = "Enable Music",
+    Default = false,
+    Callback = function(Value)
+        if Value then
+            if sound.SoundId == "" then sound.SoundId = playlist["Music 1"] end
+            sound:Play()
+        else
+            sound:Stop()
+        end
+    end
+})
+
+-- Volume Control
+vMusic:AddSlider({
+    Name = "Volume",
+    Min = 0,
+    Max = 10,
+    Default = 5,
+    Callback = function(Value)
+        sound.Volume = Value / 10
+    end
+})
 -- ===== TOGGLE REDZLIB =====
 V496:AddToggle({
     Name = "Anti-Ban",
