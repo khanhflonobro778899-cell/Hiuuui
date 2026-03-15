@@ -3782,6 +3782,7 @@ for _,v in pairs(game.CoreGui:GetDescendants()) do
         
     end
 end
+local v498 = v466:MakeTab({"Music", "music"})
 local v485 = v466:MakeTab({"Farm", "home"})
 local v487 = v466:MakeTab({"Quest | Items", "swords"})
 local v486 = v466:MakeTab({"Auto Fishing", "rbxassetid://127664059821666"})
@@ -3792,7 +3793,6 @@ local v493 = v466:MakeTab({"Teleport", "locate"})
 local v494 = v466:MakeTab({"Visual", "user"})
 local v495 = v466:MakeTab({"Shop", "shoppingCart"})
 local v496 = v466:MakeTab({"Misc", "settings"}) 
-local v498 = v466:MakeTab({"Music", "music"})
 _G.SelectWeapon = "Melee"
 task.spawn(function()
     while task.wait() do
@@ -10725,50 +10725,61 @@ function GetNewServer()
     end
 end
 local playlist = {
-    ["Music 1"] = "rbxassetid://110919391228823",
-    ["Music 2"] = "rbxassetid://110788401793874",
-    ["Music 3"] = "rbxassetid://118507373399694",
-    ["Music 4"] = "rbxassetid://130437050908450",
-    ["Music 5"] = "rbxassetid://1840776993",
-    ["Music 6"] = "rbxassetid://142376088",
-    ["Music 7"] = "rbxassetid://1846088038",
-    ["Music 8"] = "rbxassetid://1848354536",
-    ["Music 9"] = "rbxassetid://120011175571061",
-    ["Music 10"] = "rbxassetid://111172243066964",
-    ["Music 11"] = "rbxassetid://9045765634",
-    ["Music 12"] = "rbxassetid://6198220635",
-    ["Music 13"] = "rbxassetid://5409360995",
-    ["Music 14"] = "rbxassetid://99152674992699",
-    ["Music 15"] = "rbxassetid://89357977537699",
-    ["Music 16"] = "rbxassetid://87488015719562"
+    ["Music 1"] = "110919391228823",
+    ["Music 2"] = "110788401793874",
+    ["Music 3"] = "118507373399694",
+    ["Music 4"] = "130437050908450",
+    ["Music 5"] = "1840776993",
+    ["Music 6"] = "142376088",
+    ["Music 7"] = "1846088038",
+    ["Music 8"] = "1848354536",
+    ["Music 9"] = "120011175571061",
+    ["Music 10"] = "111172243066964",
+    ["Music 11"] = "9045765634",
+    ["Music 12"] = "6198220635",
+    ["Music 13"] = "5409360995",
+    ["Music 14"] = "99152674992699",
+    ["Music 15"] = "89357977537699",
+    ["Music 16"] = "87488015719562"
 }
 
-local songNames = {}
-for i = 1, #playlist do table.insert(songNames, "Music "..i) end
+-- Sắp xếp danh sách tên bài hát để hiện đầy đủ trong Dropdown
+local songNames = {"Music 1", "Music 2", "Music 3", "Music 4", "Music 5", "Music 6", "Music 7", "Music 8", "Music 9", "Music 10", "Music 11", "Music 12", "Music 13", "Music 14", "Music 15", "Music 16"}
 
-local sound = game.Workspace:FindFirstChild("HysroMusic") or Instance.new("Sound", game.Workspace)
+-- Setup âm thanh chuẩn (Xóa cái cũ nếu có để tránh lỗi)
+if game.Workspace:FindFirstChild("HysroMusic") then
+    game.Workspace.HysroMusic:Destroy()
+end
+
+local sound = Instance.new("Sound", game.Workspace)
 sound.Name = "HysroMusic"
 sound.Volume = 0.5
 sound.Looped = true
+sound.SoundId = "rbxassetid://" .. playlist["Music 1"]
 
 v498:AddSection({"Music Player Control"})
 
+-- Dropdown hiện đầy đủ 16 bài
 v498:AddDropdown({
     Name = "Select Song",
     Options = songNames,
     Default = "Music 1",
     Callback = function(v_select)
-        sound.SoundId = playlist[v_select]
-        if sound.IsPlaying then sound:Play() end
+        sound.SoundId = "rbxassetid://" .. playlist[v_select]
+        if sound.IsPlaying then 
+            sound:Stop()
+            sound:Play() 
+        end
     end
 })
 
+-- Bật tắt nhạc
 v498:AddToggle({
     Name = "Enable Music",
     Default = false,
     Callback = function(v_toggle)
+        _G.PlayMusic = v_toggle
         if v_toggle then
-            if sound.SoundId == "" then sound.SoundId = playlist["Music 1"] end
             sound:Play()
         else
             sound:Stop()
@@ -10776,6 +10787,7 @@ v498:AddToggle({
     end
 })
 
+-- Chỉnh âm lượng
 v498:AddSlider({
     Name = "Volume Level",
     Min = 0, Max = 10, Default = 5,
