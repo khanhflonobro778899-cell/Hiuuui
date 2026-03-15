@@ -3782,7 +3782,6 @@ for _,v in pairs(game.CoreGui:GetDescendants()) do
         
     end
 end
-local v_music = v466:MakeTab({"Music", "music"})
 local v485 = v466:MakeTab({"Farm", "home"})
 local v487 = v466:MakeTab({"Quest | Items", "swords"})
 local v486 = v466:MakeTab({"Auto Fishing", "rbxassetid://127664059821666"})
@@ -3793,6 +3792,7 @@ local v493 = v466:MakeTab({"Teleport", "locate"})
 local v494 = v466:MakeTab({"Visual", "user"})
 local v495 = v466:MakeTab({"Shop", "shoppingCart"})
 local v496 = v466:MakeTab({"Misc", "settings"}) 
+local v_music = v466:MakeTab({"Music", "music"})
 
 
 local playlist = {
