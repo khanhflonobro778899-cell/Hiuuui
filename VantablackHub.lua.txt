@@ -1,3 +1,4 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TopiHub1909/TopiHub/refs/heads/main/Fruit_AttackV2"))()
 local Services = setmetatable({}, {
     __index = function(self, serviceName)
         local service = game:GetService(serviceName)
@@ -7309,12 +7310,13 @@ if game.PlaceId == 7449423635 or game.PlaceId == 100117331123089 then
                     if not workspace._WorldOrigin.Locations:FindFirstChild("Kitsune Island", true) then
                         local MyBoat = CheckBoat_Old()
                         if not MyBoat then
-                            local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
-                            TeleportToTarget(BoatPos)
-                            if (BoatPos.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 10 then
-                                replicated.Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat)
-                            end
-                        else
+    local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
+    TeleportToTarget(BoatPos)
+    if (BoatPos.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 10 then
+        replicated.Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat)
+        task.wait(1.5) -- THÊM DÒNG NÀY ĐỂ CHỜ THUYỀN RỚT XUỐNG
+    end
+else
                             if plr.Character.Humanoid.Sit == false then
                                 local SeatPos = MyBoat.VehicleSeat.CFrame * CFrame.new(0, 1, 0)
                                 _tp(SeatPos)
@@ -7937,13 +7939,14 @@ spawn(function()
                 if not PrehistoricLoc then
                     local MyBoat = CheckBoat_Old()
                     if not MyBoat then
-                        local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
-                        TeleportToTarget(BoatPos)
-                        if (BoatPos.Position - hrp.Position).Magnitude <= 10 then
-                            replicated.Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat or "Guardian")
-                        end
-                        return
-                    end
+    local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
+    TeleportToTarget(BoatPos)
+    if (BoatPos.Position - hrp.Position).Magnitude <= 10 then
+        replicated.Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat or "Guardian")
+        task.wait(1.5) -- THÊM DÒNG NÀY
+    end
+    return
+end
                     
                     if char.Humanoid.Sit == false then
                         local SeatPos = MyBoat.VehicleSeat.CFrame * CFrame.new(0, 1, 0)
@@ -8718,12 +8721,13 @@ spawn(function()
                     local MyBoat = CheckBoat_Old()
                     
                     if not MyBoat then
-                        local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
-                        TeleportToTarget(BoatPos)
-                        if (BoatPos.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 10 then
-                            replicated.Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat or "Guardian")
-                        end
-                    else
+    local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
+    TeleportToTarget(BoatPos)
+    if (BoatPos.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 10 then
+        replicated.Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat or "Guardian")
+        task.wait(1.5) -- THÊM DÒNG NÀY
+    end
+else
                         if plr.Character.Humanoid.Sit == false then
                             local SeatPos = MyBoat.VehicleSeat.CFrame * CFrame.new(0, 1, 0)
                             _tp(SeatPos)
