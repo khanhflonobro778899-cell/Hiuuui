@@ -1,4 +1,3 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/TopiHub1909/TopiHub/refs/heads/main/Fruit_AttackV2"))()
 local Services = setmetatable({}, {
     __index = function(self, serviceName)
         local service = game:GetService(serviceName)
@@ -839,7 +838,7 @@ CheckF = function()
 			return true;
 		end;
 	end;
-CheckBoat = function()
+CheckBoat_Old = function()
 		for I, e in pairs(workspace.Boats:GetChildren()) do
 			if tostring(e.Owner.Value) == tostring(plr.Name) then
 				return e;
@@ -7308,7 +7307,7 @@ if game.PlaceId == 7449423635 or game.PlaceId == 100117331123089 then
             if _G.AutofindKitIs then
                 pcall(function()
                     if not workspace._WorldOrigin.Locations:FindFirstChild("Kitsune Island", true) then
-                        local MyBoat = CheckBoat()
+                        local MyBoat = CheckBoat_Old()
                         if not MyBoat then
                             local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
                             TeleportToTarget(BoatPos)
@@ -7936,7 +7935,7 @@ spawn(function()
                 local PrehistoricLoc = workspace._WorldOrigin.Locations:FindFirstChild("Prehistoric Island", true)
                 
                 if not PrehistoricLoc then
-                    local MyBoat = CheckBoat()
+                    local MyBoat = CheckBoat_Old()
                     if not MyBoat then
                         local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
                         TeleportToTarget(BoatPos)
@@ -8716,7 +8715,7 @@ spawn(function()
         if _G.FindMirage then
             pcall(function()
                 if not workspace._WorldOrigin.Locations:FindFirstChild("Mirage Island", true) then
-                    local MyBoat = CheckBoat()
+                    local MyBoat = CheckBoat_Old()
                     
                     if not MyBoat then
                         local BoatPos = CFrame.new(-16927.451, 9.086, 433.864)
