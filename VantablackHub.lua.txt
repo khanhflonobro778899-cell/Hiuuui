@@ -7029,18 +7029,17 @@ v6:AddToggle({
     Callback = function(Value)
         _G.SailBoats = Value
         if not Value then
-            -- Tự động nhả nút W nếu người dùng tắt Farm giữa chừng
+            -- Tự động nhả phím W khi tắt chức năng
             game:GetService("VirtualInputManager"):SendKeyEvent(false, "W", false, game)
         end
     end
 })
 
--- Hàm kiểm tra xem quái biển có nằm trong danh sách bạn đã TÍCH CHỌN hay không
+-- Hàm kiểm tra xem quái biển có nằm trong danh sách ĐÃ TÍCH CHỌN hay không
 local function IsValidSeaTarget(mob)
     if not mob or not mob:FindFirstChild("Humanoid") or mob.Humanoid.Health <= 0 then return false end
     local name = mob.Name
 
-    -- Đối chiếu với các biến Toggle của bạn
     if _G.SeaBeast1 and (string.find(name, "Sea Beast") or string.find(name, "Rumbling")) then return true end
     if _G.PGB and (string.find(name, "Brigade") or string.find(name, "Scouting") or string.find(name, "Grand")) then return true end
     if _G.Shark and name == "Shark" then return true end
@@ -7050,7 +7049,6 @@ local function IsValidSeaTarget(mob)
     if _G.HCM and name == "Haunted Crew Member" then return true end
     if _G.FishBoat and name == "FishBoat" then return true end
 
-    -- Nếu không có nút nào được tích cho con quái này -> Bỏ qua
     return false
 end
 
@@ -7066,10 +7064,9 @@ task.spawn(function()
                 
                 if not hrp or not humanoid or humanoid.Health <= 0 then return end
 
-                -- TÌM QUÁI BIỂN (DỰA TRÊN BỘ LỌC)
+                -- TÌM QUÁI BIỂN DỰA TRÊN BỘ LỌC
                 local target = nil
                 
-                -- Tìm trong thư mục Enemies
                 if workspace:FindFirstChild("Enemies") then
                     for _, mob in pairs(workspace.Enemies:GetChildren()) do
                         if IsValidSeaTarget(mob) then
@@ -7078,8 +7075,6 @@ task.spawn(function()
                         end
                     end
                 end
-                
-                -- Tìm thêm trong thư mục SeaBeasts (Vì game thỉnh thoảng spawn Sea Beast ở đây)
                 if not target and workspace:FindFirstChild("SeaBeasts") then
                     for _, mob in pairs(workspace.SeaBeasts:GetChildren()) do
                         if IsValidSeaTarget(mob) then
@@ -7094,74 +7089,89 @@ task.spawn(function()
                     if humanoid.Sit then 
                         humanoid.Sit = false 
                     end 
-                    -- Nhả nút W để thuyền không trôi đi mất
                     game:GetService("VirtualInputManager"):SendKeyEvent(false, "W", false, game)
                     
                     local targetRoot = target:FindFirstChild("HumanoidRootPart") or target.PrimaryPart
                     if targetRoot then
                         -- Bay lên đầu quái để đánh
-                        hrp.CFrame = targetRoot.CFrame * CFrame.new(0, 30, 0)
+                        hrp.CFrame = targetRoot.CFrame * CFrame.new(0, 35, 0)
                         
-                        -- Cầm vũ khí lên và click
                         if _G.SelectWeapon then EquipWeapon(_G.SelectWeapon) end
                         game:GetService("VirtualUser"):CaptureController()
                         game:GetService("VirtualUser"):Button1Down(Vector2.new(1280, 672))
                     end
                 
-                -- TRẠNG THÁI 2: KHÔNG CÓ QUÁI HOẶC CHỈ CÓ QUÁI MÌNH KHÔNG CHỌN -> TIẾP TỤC LÁI THUYỀN
+                -- TRẠNG THÁI 2: KHÔNG CÓ QUÁI CHUẨN -> TÌM THUYỀN VÀ LÁI
                 else
-                    local boat = CheckBoat()
+                    -- LƯU Ý QUAN TRỌNG: Check xem có đang NGỒI TRÊN GHẾ LÁI không
+                    local isDriving = humanoid.Sit and humanoid.SeatPart and humanoid.SeatPart:IsA("VehicleSeat")
                     
-                    if not boat then
-                        -- Chưa có thuyền -> Đi mua
-                        local BoatDealerPos = CFrame.new(-16927.451, 9.086, 433.864) 
-                        if (hrp.Position - BoatDealerPos.Position).Magnitude > 20 then
-                            _tp(BoatDealerPos)
-                        else
-                            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat or "Guardian")
-                            task.wait(1) 
+                    if isDriving then
+                        -- NẾU ĐÃ NGỒI TRÊN THUYỀN (DÙ MUA HAY ĂN TRỘM) -> CHỈ TẬP TRUNG LÁI
+                        local seat = humanoid.SeatPart
+                        
+                        -- Lấy Danger Level
+                        local dangerMeter = plr.PlayerGui.Main:FindFirstChild("DangerMeter")
+                        local currentLevel = 0
+                        if dangerMeter and dangerMeter.Visible and dangerMeter:FindFirstChild("Meter") and dangerMeter.Meter:FindFirstChild("Level") then
+                            local lvlText = dangerMeter.Meter.Level.Text
+                            if lvlText == "?" then 
+                                currentLevel = 99 -- Tượng trưng cho Infinite
+                            else
+                                currentLevel = tonumber(string.match(lvlText, "%d+")) or 0
+                            end
                         end
+
+                        local targetLevel = 1
+                        if _G.DangerSc == "Lv Infinite" then 
+                            targetLevel = 99
+                        elseif _G.DangerSc then 
+                            targetLevel = tonumber(string.match(_G.DangerSc, "%d+")) or 1
+                        end
+
+                        -- So sánh Level và Lái
+                        if currentLevel < targetLevel then
+                            seat.MaxSpeed = _G.SetSpeedBoat or 300
+                            seat.CFrame = CFrame.new(seat.Position, Vector3.new(-30000, seat.Position.Y, 37016))
+                            game:GetService("VirtualInputManager"):SendKeyEvent(true, "W", false, game)
+                        else
+                            game:GetService("VirtualInputManager"):SendKeyEvent(false, "W", false, game)
+                            seat.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                        end
+                    
                     else
-                        local seat = boat:FindFirstChildWhichIsA("VehicleSeat")
-                        if seat then
-                            -- Nếu chưa ngồi -> Nhảy vào ghế
-                            if not humanoid.Sit then
+                        -- NẾU CHƯA NGỒI TRÊN THUYỀN -> ĐI TÌM HOẶC ĐI MUA
+                        game:GetService("VirtualInputManager"):SendKeyEvent(false, "W", false, game)
+                        
+                        local myBoat = nil
+                        for _, boat in pairs(workspace.Boats:GetChildren()) do
+                            if boat:FindFirstChild("Owner") and tostring(boat.Owner.Value) == tostring(plr.Name) then
+                                myBoat = boat
+                                break
+                            end
+                        end
+
+                        if myBoat then
+                            -- Đã có thuyền nhưng chưa ngồi -> Bay vào ghế
+                            local seat = myBoat:FindFirstChildWhichIsA("VehicleSeat")
+                            if seat then
                                 hrp.CFrame = seat.CFrame
                                 task.wait(0.5)
+                            end
+                        else
+                            -- Chưa có thuyền -> Bay tới NPC Mua thuyền (Sea 3 Tiki Outpost)
+                            local BoatDealerPos = CFrame.new(-16927.451, 9.086, 433.864) 
+                            if (hrp.Position - BoatDealerPos.Position).Magnitude > 20 then
+                                if _tp then 
+                                    _tp(BoatDealerPos) 
+                                else 
+                                    hrp.CFrame = BoatDealerPos 
+                                end
                             else
-                                -- Kiểm tra cấp độ biển (Danger Meter)
-                                local dangerMeter = plr.PlayerGui.Main:FindFirstChild("DangerMeter")
-                                local currentLevel = "0"
-                                if dangerMeter and dangerMeter.Visible and dangerMeter:FindFirstChild("Meter") and dangerMeter.Meter:FindFirstChild("Level") then
-                                    currentLevel = dangerMeter.Meter.Level.Text
-                                end
-
-                                local targetLevel = "1"
-                                if _G.DangerSc == "Lv Infinite" then 
-                                    targetLevel = "?"
-                                elseif _G.DangerSc then 
-                                    targetLevel = string.match(_G.DangerSc, "%d+") 
-                                end
-
-                                local isReached = false
-                                if targetLevel == "?" and currentLevel == "?" then
-                                    isReached = true
-                                elseif targetLevel ~= "?" and currentLevel ~= "?" then
-                                    if tonumber(currentLevel) and tonumber(targetLevel) and tonumber(currentLevel) >= tonumber(targetLevel) then
-                                        isReached = true
-                                    end
-                                end
-
-                                -- Lái ra vùng biển sâu
-                                if not isReached then
-                                    seat.MaxSpeed = _G.SetSpeedBoat or 300
-                                    seat.CFrame = CFrame.new(seat.Position, Vector3.new(-30000, seat.Position.Y, 37016))
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "W", false, game)
-                                else
-                                    -- Đã đến vùng biển yêu cầu -> Dừng tàu chờ sự kiện
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(false, "W", false, game)
-                                    seat.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                                end
+                                -- Đã tới NPC -> Delay một chút cho an toàn rồi mua
+                                task.wait(0.5)
+                                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyBoat", _G.SelectedBoat or "Guardian")
+                                task.wait(1.5) -- Chờ thuyền rớt xuống biển
                             end
                         end
                     end
