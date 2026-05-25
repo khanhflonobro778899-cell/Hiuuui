@@ -3907,39 +3907,74 @@ Callback = function(Value)
 end})
 _G.Bypass = false -- Biến trạng thái từ nút của bạn
 
-local function TeleportBypass(targetPosition)
+-- Hàm di chuyển gốc áp dụng cho TOÀN BỘ SCRIPT (Auto Farm, Quests, Teleport...)
+function toPos(targetCFrame)
     local player = game.Players.LocalPlayer
     local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    if not character or not character:FindFirstChild("HumanoidRootPart") or not character:FindFirstChildOfClass("Humanoid") then return end
     
     local root = character.HumanoidRootPart
-    local distance = (root.Position - targetPosition).Magnitude
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid.Health <= 0 then return end
 
-    if distance > 1500 then
-        -- TRƯỜNG HỢP XA: Thực hiện Teleport + Bypass Reset
-        print("Khoảng cách quá xa, đang thực hiện Bypass...")
+    -- Chuẩn hóa dữ liệu tọa độ điểm đến
+    local targetPos = typeof(targetCFrame) == "CFrame" and targetCFrame.Position or targetCFrame
+    local targetCF = typeof(targetCFrame) == "CFrame" and targetCFrame or CFrame.new(targetCFrame)
+    local distance = (root.Position - targetPos).Magnitude
+
+    -- Bật Noclip xuyên tường toàn thời gian khi đang di chuyển để tránh kẹt địa hình
+    if not _G.NoclipHook then
+        _G.NoclipHook = game:GetService("RunService").Stepped:Connect(function()
+            if game.Players.LocalPlayer.Character then
+                for _, part in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+                    if part:IsA("BasePart") then part.CanCollide = false end
+                end
+            end
+        end)
+    end
+
+    -- ====================================================================
+    -- KIỂM TRA ĐIỀU KIỆN: NẾU BẬT CÔNG TẮC VÀ KHOẢNG CÁCH XA QUÁ 1500 STUDS
+    -- ====================================================================
+    if _G.Bypass and distance > 1500 then
+        -- [BƯỚC 1]: Đưa thẳng nhân vật tới đích và đóng băng chống giật camera
+        root.CFrame = targetCF
+        root.Anchored = true
         
-        -- Bước 1: Lưu trạng thái camera và giữ vị trí
-        local startPos = root.Position
+        local keepLocked = true
+        task.spawn(function()
+            while keepLocked do
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    player.Character.HumanoidRootPart.CFrame = targetCF
+                    player.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+                end
+                task.wait() -- Khóa liên tục mỗi frame hình
+            end
+        end)
         
-        -- Dịch chuyển nhân vật đến gần đích (hoặc đích)
-        root.CFrame = CFrame.new(targetPosition)
+        task.wait(1.0) -- Giữ cứng camera ổn định tại đảo mới đúng 1 giây
         
-        -- Bước 2: Chờ đợi để đảm bảo server đã cập nhật vị trí mà không bị anti-cheat kéo lại
-        -- Trong vòng 1 giây đầu tiên, khóa root part hoặc làm cho character không thể bị di chuyển bởi server
-        root.Anchored = true 
-        wait(1.0) 
-        
-        -- Bước 3: Reset nhân vật ngay tại giây thứ nhất để hoàn tất dịch chuyển
+        -- [BƯỚC 2]: Hết giây thứ nhất, mở neo và thực hiện RESET nhân vật ngay lập tức
+        keepLocked = false
         root.Anchored = false
-        player.Character:BreakJoints() -- Reset nhân vật
+        player.Character:BreakJoints() 
+        
+        -- [BƯỚC 3]: Đợi hồi sinh xong tại đảo mới rồi mới cho phép code chạy tiếp
+        player.CharacterAdded:Wait()
+        task.wait(0.5) -- Ổn định dữ liệu tránh lỗi hoãn vị trí
         
     else
-        -- TRƯỜNG HỢP GẦN: Chỉ cần bay (Tween) để tránh bị phát hiện
-        print("Khoảng cách gần, đang bay tới...")
-        local tweenInfo = TweenInfo.new(distance / 500, Enum.EasingStyle.Linear) -- Tốc độ bay
-        local tween = game:GetService("TweenService"):Create(root, tweenInfo, {CFrame = CFrame.new(targetPosition)})
+        -- ====================================================================
+        -- TRƯỜNG HỢP NGƯỢC LẠI: KHOẢNG CÁCH GẦN (< 1500 STUDS) HOẶC TẮT CÔNG TẮC
+        -- -> Sử dụng hệ thống bay Tween mượt mà mặc định của Hub
+        -- ====================================================================
+        local TweenService = game:GetService("TweenService")
+        local speed = _G.SpeedB or 300 -- Tốc độ bay mặc định của Hub bạn
+        local tweenTime = distance / speed
+        
+        local tween = TweenService:Create(root, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = targetCF})
         tween:Play()
+        tween.Completed:Wait() -- Chờ bay tới nơi hoàn toàn mới chạy tiếp lệnh sau
     end
 end
 SafeModes = Tabs.Settings:AddToggle({
