@@ -1663,7 +1663,7 @@ local Tabs = {
     Main = Window:MakeTab({ Title = "Farming", Icon = "rbxassetid://10709769508" }),
     Settings = Window:MakeTab({ Title = "Setting Farming", Icon = "rbxassetid://10734950020" }),
     Fish = Window:MakeTab({ Title = "Fishing", Icon = "rbxassetid://127664059821666" }),
-    Quests = Window:MakeTab({ Title = "Stack Farm", Icon = "rbxassetid://10734943448" }),
+    Quests = Window:MakeTab({ Title = "Stack Farm", Icon = "rbxassetid://10734975692" }),
     SeaEvent = Window:MakeTab({ Title = "Sea Events", Icon = "rbxassetid://10747376931" }),
     Mirage = Window:MakeTab({ Title = "Mirage", Icon = "rbxassetid://10734920149" }),
     Race = Window:MakeTab({ Title = "Upgrade Race", Icon = "rbxassetid://10734950309" }),
@@ -1672,7 +1672,7 @@ local Tabs = {
     Raids = Window:MakeTab({ Title = "Fruit And Raid", Icon = "rbxassetid://10709790875" }),
     Travel = Window:MakeTab({ Title = "Teleport", Icon = "rbxassetid://10734906975" }),
     Shop = Window:MakeTab({ Title = "Shopping", Icon = "rbxassetid://10734952479" }),
-    Misc = Window:MakeTab({ Title = "Miscellaneous", Icon = "link" })
+    Misc = Window:MakeTab({ Title = "Miscellaneous", Icon = "rbxassetid://10734943448" })
 }
 
 Tabs.Info:AddSection("Information")
@@ -3905,6 +3905,43 @@ Default = false,
 Callback = function(Value)
   _G.Bypass = Value
 end})
+_G.Bypass = false -- Biến trạng thái từ nút của bạn
+
+local function TeleportBypass(targetPosition)
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local root = character.HumanoidRootPart
+    local distance = (root.Position - targetPosition).Magnitude
+
+    if distance > 1500 then
+        -- TRƯỜNG HỢP XA: Thực hiện Teleport + Bypass Reset
+        print("Khoảng cách quá xa, đang thực hiện Bypass...")
+        
+        -- Bước 1: Lưu trạng thái camera và giữ vị trí
+        local startPos = root.Position
+        
+        -- Dịch chuyển nhân vật đến gần đích (hoặc đích)
+        root.CFrame = CFrame.new(targetPosition)
+        
+        -- Bước 2: Chờ đợi để đảm bảo server đã cập nhật vị trí mà không bị anti-cheat kéo lại
+        -- Trong vòng 1 giây đầu tiên, khóa root part hoặc làm cho character không thể bị di chuyển bởi server
+        root.Anchored = true 
+        wait(1.0) 
+        
+        -- Bước 3: Reset nhân vật ngay tại giây thứ nhất để hoàn tất dịch chuyển
+        root.Anchored = false
+        player.Character:BreakJoints() -- Reset nhân vật
+        
+    else
+        -- TRƯỜNG HỢP GẦN: Chỉ cần bay (Tween) để tránh bị phát hiện
+        print("Khoảng cách gần, đang bay tới...")
+        local tweenInfo = TweenInfo.new(distance / 500, Enum.EasingStyle.Linear) -- Tốc độ bay
+        local tween = game:GetService("TweenService"):Create(root, tweenInfo, {CFrame = CFrame.new(targetPosition)})
+        tween:Play()
+    end
+end
 SafeModes = Tabs.Settings:AddToggle({
 Name = "Panic Mode", 
 Description = "Chế Độ Hoảng Loạn", 
