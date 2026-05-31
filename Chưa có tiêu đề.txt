@@ -1,0 +1,2165 @@
+```lua
+local Kavo = {}
+
+local tween = game:GetService("TweenService")
+local tweeninfo = TweenInfo.new
+local input = game:GetService("UserInputService")
+local run = game:GetService("RunService")
+
+local Utility = {}
+local Objects = {}
+
+-- Hàm bật tính năng kéo thả mượt mà cho cửa sổ chính
+function Kavo:DraggingEnabled(frame, parent)
+    parent = parent or frame
+
+    local dragging = false
+    local dragInput, inputPos, framePos
+
+    local function startDrag(inputObj)
+        dragging = true
+        inputPos = inputObj.Position
+        framePos = parent.Position
+
+        inputObj.Changed:Connect(function()
+            if inputObj.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+
+    frame.InputBegan:Connect(function(inputObj)
+        if inputObj.UserInputType == Enum.UserInputType.MouseButton1 or inputObj.UserInputType == Enum.UserInputType.Touch then
+            startDrag(inputObj)
+        end
+    end)
+
+    frame.InputChanged:Connect(function(inputObj)
+        if inputObj.UserInputType == Enum.UserInputType.MouseMovement or inputObj.UserInputType == Enum.UserInputType.Touch then
+            dragInput = inputObj
+        end
+    end)
+
+    input.InputChanged:Connect(function(inputObj)
+        if inputObj == dragInput and dragging then
+            local delta = inputObj.Position - inputPos
+            -- Di chuyển mượt mà bằng Tween thay vì gán cứng toạ độ
+            tween:Create(parent, tweeninfo(0.08, Enum.EasingStyle.Out, Enum.EasingDirection.Quad), {
+                Position = UDim2.new(
+                    framePos.X.Scale, framePos.X.Offset + delta.X,
+                    framePos.Y.Scale, framePos.Y.Offset + delta.Y
+                )
+            }):Play()
+        end
+    end)
+end
+
+-- Hàm tạo hiệu ứng chuyển động mượt mà
+function Utility:TweenObject(obj, properties, duration, ...)
+    tween:Create(obj, tweeninfo(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, ...), properties):Play()
+end
+
+-- Hàm tạo đường viền phát sáng phong cách tương lai
+local function CreateBorderStroke(parent, color, thickness, transparency)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color or Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = thickness or 1
+    stroke.Transparency = transparency or 0.8
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = parent
+    return stroke
+end
+
+-- Bộ theme cao cấp, phối màu Neon Cyberpunk
+local themes = {
+    SchemeColor = Color3.fromRGB(90, 115, 255), -- Neon Blue
+    Background = Color3.fromRGB(15, 16, 22), -- Deep Void Dark
+    Header = Color3.fromRGB(10, 11, 15),
+    TextColor = Color3.fromRGB(255, 255, 255),
+    ElementColor = Color3.fromRGB(24, 25, 33)
+}
+
+local themeStyles = {
+    DarkTheme = {
+        SchemeColor = Color3.fromRGB(115, 90, 255), -- Neon Purple
+        Background = Color3.fromRGB(13, 13, 17),
+        Header = Color3.fromRGB(8, 8, 12),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(21, 21, 28)
+    },
+    LightTheme = {
+        SchemeColor = Color3.fromRGB(0, 122, 255),
+        Background = Color3.fromRGB(245, 246, 250),
+        Header = Color3.fromRGB(225, 228, 235),
+        TextColor = Color3.fromRGB(20, 20, 20),
+        ElementColor = Color3.fromRGB(255, 255, 255)
+    },
+    BloodTheme = {
+        SchemeColor = Color3.fromRGB(255, 45, 85), -- Neon Rose
+        Background = Color3.fromRGB(14, 10, 11),
+        Header = Color3.fromRGB(8, 5, 6),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(24, 16, 18)
+    },
+    GrapeTheme = {
+        SchemeColor = Color3.fromRGB(186, 85, 211),
+        Background = Color3.fromRGB(24, 15, 30),
+        Header = Color3.fromRGB(15, 8, 20),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(36, 24, 45)
+    },
+    Ocean = {
+        SchemeColor = Color3.fromRGB(0, 230, 255), -- Cyan Neon
+        Background = Color3.fromRGB(12, 19, 29),
+        Header = Color3.fromRGB(7, 12, 18),
+        TextColor = Color3.fromRGB(220, 245, 255),
+        ElementColor = Color3.fromRGB(20, 31, 46)
+    },
+    Midnight = {
+        SchemeColor = Color3.fromRGB(0, 255, 150), -- Mint Neon
+        Background = Color3.fromRGB(10, 14, 23),
+        Header = Color3.fromRGB(5, 8, 15),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(18, 25, 38)
+    },
+    Sentinel = {
+        SchemeColor = Color3.fromRGB(255, 75, 75),
+        Background = Color3.fromRGB(20, 20, 20),
+        Header = Color3.fromRGB(12, 12, 12),
+        TextColor = Color3.fromRGB(140, 220, 160),
+        ElementColor = Color3.fromRGB(28, 28, 28)
+    },
+    Synapse = {
+        SchemeColor = Color3.fromRGB(255, 170, 0), -- Synapse Orange
+        Background = Color3.fromRGB(14, 14, 14),
+        Header = Color3.fromRGB(8, 8, 8),
+        TextColor = Color3.fromRGB(215, 215, 215),
+        ElementColor = Color3.fromRGB(24, 24, 24)
+    },
+    Serpent = {
+        SchemeColor = Color3.fromRGB(0, 230, 115),
+        Background = Color3.fromRGB(15, 20, 18),
+        Header = Color3.fromRGB(8, 12, 10),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(25, 33, 29)
+    }
+}
+
+local SettingsT = {}
+local Name = "KavoConfig_Modern.JSON"
+
+pcall(function()
+    if not pcall(function() readfile(Name) end) then
+        writefile(Name, game:service'HttpService':JSONEncode(SettingsT))
+    end
+    Settings = game:service'HttpService':JSONEncode(readfile(Name))
+end)
+
+local LibName = tostring(math.random(1, 100))..tostring(math.random(1,50))..tostring(math.random(1, 100))
+
+function Kavo:ToggleUI()
+    if game.CoreGui[LibName].Enabled then
+        game.CoreGui[LibName].Enabled = false
+    else
+        game.CoreGui[LibName].Enabled = true
+    end
+end
+
+function Kavo.CreateLib(kavName, themeList)
+    if not themeList then
+        themeList = themes
+    end
+    if type(themeList) == "string" then
+        themeList = themeStyles[themeList] or themeStyles.DarkTheme
+    else
+        themeList.SchemeColor = themeList.SchemeColor or Color3.fromRGB(90, 115, 255)
+        themeList.Background = themeList.Background or Color3.fromRGB(15, 16, 22)
+        themeList.Header = themeList.Header or Color3.fromRGB(10, 11, 15)
+        themeList.TextColor = themeList.TextColor or Color3.fromRGB(255,255,255)
+        themeList.ElementColor = themeList.ElementColor or Color3.fromRGB(24, 25, 33)
+    end
+
+    local selectedTab 
+    kavName = kavName or "Kavo Remastered"
+    table.insert(Kavo, kavName)
+    
+    for i,v in pairs(game.CoreGui:GetChildren()) do
+        if v:IsA("ScreenGui") and v.Name == kavName then
+            v:Destroy()
+        end
+    end
+    
+    local ScreenGui = Instance.new("ScreenGui")
+    local Main = Instance.new("Frame")
+    local MainCorner = Instance.new("UICorner")
+    local MainHeader = Instance.new("Frame")
+    local headerCover = Instance.new("UICorner")
+    local coverup = Instance.new("Frame")
+    local title = Instance.new("TextLabel")
+    local close = Instance.new("ImageButton")
+    local MainSide = Instance.new("Frame")
+    local sideCorner = Instance.new("UICorner")
+    local coverup_2 = Instance.new("Frame")
+    local tabFrames = Instance.new("Frame")
+    local tabListing = Instance.new("UIListLayout")
+    local pages = Instance.new("Frame")
+    local Pages = Instance.new("Folder")
+    local infoContainer = Instance.new("Frame")
+    local blurFrame = Instance.new("Frame")
+
+    Kavo:DraggingEnabled(MainHeader, Main)
+
+    blurFrame.Name = "blurFrame"
+    blurFrame.Parent = pages
+    blurFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    blurFrame.BackgroundTransparency = 1
+    blurFrame.BorderSizePixel = 0
+    blurFrame.Position = UDim2.new(-0.022, 0, -0.037, 0)
+    blurFrame.Size = UDim2.new(0, 376, 0, 289)
+    blurFrame.ZIndex = 999
+
+    ScreenGui.Parent = game.CoreGui
+    ScreenGui.Name = LibName
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.ResetOnSpawn = false
+
+    Main.Name = "Main"
+    Main.Parent = ScreenGui
+    Main.BackgroundColor3 = themeList.Background
+    Main.BackgroundTransparency = 0.1 -- Tạo độ mờ ảo trong suốt nhẹ
+    Main.ClipsDescendants = true
+    Main.AnchorPoint = Vector2.new(0.5, 0.5)
+    Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Main.Size = UDim2.new(0, 525, 0, 318)
+    
+    -- Áp dụng viền Neon đẹp mắt cho toàn bộ bảng điều khiển
+    CreateBorderStroke(Main, themeList.SchemeColor, 1.5, 0.4)
+
+    MainCorner.CornerRadius = UDim.new(0, 8)
+    MainCorner.Parent = Main
+
+    MainHeader.Name = "MainHeader"
+    MainHeader.Parent = Main
+    MainHeader.BackgroundColor3 = themeList.Header
+    MainHeader.BackgroundTransparency = 0.2
+    Objects[MainHeader] = "BackgroundColor3"
+    MainHeader.Size = UDim2.new(0, 525, 0, 32)
+    
+    headerCover.CornerRadius = UDim.new(0, 8)
+    headerCover.Parent = MainHeader
+
+    coverup.Name = "coverup"
+    coverup.Parent = MainHeader
+    coverup.BackgroundColor3 = themeList.Header
+    coverup.BackgroundTransparency = 0.2
+    Objects[coverup] = "BackgroundColor3"
+    coverup.BorderSizePixel = 0
+    coverup.Position = UDim2.new(0, 0, 0.75, 0)
+    coverup.Size = UDim2.new(0, 525, 0, 8)
+
+    title.Name = "title"
+    title.Parent = MainHeader
+    title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    title.BackgroundTransparency = 1.000
+    title.BorderSizePixel = 0
+    title.Position = UDim2.new(0.025, 0, 0.25, 0)
+    title.Size = UDim2.new(0, 250, 0, 16)
+    title.Font = Enum.Font.GothamBold
+    title.RichText = true
+    title.Text = kavName
+    title.TextColor3 = themeList.TextColor
+    title.TextSize = 15.000
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    close.Name = "close"
+    close.Parent = MainHeader
+    close.BackgroundTransparency = 1.000
+    close.Position = UDim2.new(0.945, 0, 0.18, 0)
+    close.Size = UDim2.new(0, 20, 0, 20)
+    close.ZIndex = 2
+    close.Image = "rbxassetid://3926305904"
+    close.ImageRectOffset = Vector2.new(284, 4)
+    close.ImageRectSize = Vector2.new(24, 24)
+    close.MouseButton1Click:Connect(function()
+        tween:Create(close, tweeninfo(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            ImageTransparency = 1
+        }):Play()
+        tween:Create(Main, tweeninfo(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+			Size = UDim2.new(0,0,0,0),
+			Position = UDim2.new(0, Main.AbsolutePosition.X + (Main.AbsoluteSize.X / 2), 0, Main.AbsolutePosition.Y + (Main.AbsoluteSize.Y / 2))
+		}):Play()
+        wait(0.2)
+        ScreenGui:Destroy()
+    end)
+
+    MainSide.Name = "MainSide"
+    MainSide.Parent = Main
+    MainSide.BackgroundColor3 = themeList.Header
+    MainSide.BackgroundTransparency = 0.2
+    Objects[MainSide] = "Header"
+    MainSide.Position = UDim2.new(0, 0, 0.1, 0)
+    MainSide.Size = UDim2.new(0, 149, 0, 289)
+
+    sideCorner.CornerRadius = UDim.new(0, 8)
+    sideCorner.Parent = MainSide
+
+    coverup_2.Name = "coverup"
+    coverup_2.Parent = MainSide
+    coverup_2.BackgroundColor3 = themeList.Header
+    coverup_2.BackgroundTransparency = 0.2
+    Objects[coverup_2] = "Header"
+    coverup_2.BorderSizePixel = 0
+    coverup_2.Position = UDim2.new(0.95, 0, 0, 0)
+    coverup_2.Size = UDim2.new(0, 7, 0, 289)
+
+    tabFrames.Name = "tabFrames"
+    tabFrames.Parent = MainSide
+    tabFrames.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    tabFrames.BackgroundTransparency = 1.000
+    tabFrames.Position = UDim2.new(0.05, 0, 0.02, 0)
+    tabFrames.Size = UDim2.new(0, 135, 0, 275)
+
+    tabListing.Name = "tabListing"
+    tabListing.Parent = tabFrames
+    tabListing.SortOrder = Enum.SortOrder.LayoutOrder
+    tabListing.Padding = UDim.new(0, 5)
+
+    pages.Name = "pages"
+    pages.Parent = Main
+    pages.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    pages.BackgroundTransparency = 1.000
+    pages.BorderSizePixel = 0
+    pages.Position = UDim2.new(0.299, 0, 0.122, 0)
+    pages.Size = UDim2.new(0, 360, 0, 269)
+
+    Pages.Name = "Pages"
+    Pages.Parent = pages
+
+    infoContainer.Name = "infoContainer"
+    infoContainer.Parent = Main
+    infoContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    infoContainer.BackgroundTransparency = 1.000
+    infoContainer.BorderColor3 = Color3.fromRGB(27, 42, 53)
+    infoContainer.ClipsDescendants = true
+    infoContainer.Position = UDim2.new(0.299, 0, 0.874, 0)
+    infoContainer.Size = UDim2.new(0, 368, 0, 33)
+
+    coroutine.wrap(function()
+        while wait() do
+            Main.BackgroundColor3 = themeList.Background
+            MainHeader.BackgroundColor3 = themeList.Header
+            MainSide.BackgroundColor3 = themeList.Header
+            coverup_2.BackgroundColor3 = themeList.Header
+            coverup.BackgroundColor3 = themeList.Header
+        end
+    end)()
+
+    function Kavo:ChangeColor(prope, color)
+        if themeList[prope] then
+            themeList[prope] = color
+        end
+    end
+
+    local Tabs = {}
+    local first = true
+
+    function Tabs:NewTab(tabName)
+        tabName = tabName or "Tab"
+        local tabButton = Instance.new("TextButton")
+        local UICorner = Instance.new("UICorner")
+        local page = Instance.new("ScrollingFrame")
+        local pageListing = Instance.new("UIListLayout")
+        local tabStroke = CreateBorderStroke(tabButton, themeList.SchemeColor, 1, 0.8)
+
+        local function UpdateSize()
+            local cS = pageListing.AbsoluteContentSize
+            tween:Create(page, tweeninfo(0.15, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                CanvasSize = UDim2.new(0, cS.X, 0, cS.Y)
+            }):Play()
+        end
+
+        page.Name = "Page"
+        page.Parent = Pages
+        page.Active = true
+        page.BackgroundColor3 = themeList.Background
+        page.BackgroundTransparency = 1
+        page.BorderSizePixel = 0
+        page.Position = UDim2.new(0, 0, -0.003, 0)
+        page.Size = UDim2.new(1, 0, 1, 0)
+        page.ScrollBarThickness = 3
+        page.Visible = false
+        page.ScrollBarImageColor3 = themeList.SchemeColor
+
+        pageListing.Name = "pageListing"
+        pageListing.Parent = page
+        pageListing.SortOrder = Enum.SortOrder.LayoutOrder
+        pageListing.Padding = UDim.new(0, 6)
+
+        tabButton.Name = tabName.."TabButton"
+        tabButton.Parent = tabFrames
+        tabButton.BackgroundColor3 = themeList.SchemeColor
+        Objects[tabButton] = "SchemeColor"
+        tabButton.Size = UDim2.new(0, 135, 0, 30)
+        tabButton.AutoButtonColor = false
+        tabButton.Font = Enum.Font.GothamSemibold
+        tabButton.Text = tabName
+        tabButton.TextColor3 = themeList.TextColor
+        Objects[tabButton] = "TextColor3"
+        tabButton.TextSize = 13.000
+        tabButton.BackgroundTransparency = 1
+
+        if first then
+            first = false
+            page.Visible = true
+            tabButton.BackgroundTransparency = 0.15
+            tabStroke.Transparency = 0.2
+            UpdateSize()
+        else
+            page.Visible = false
+            tabButton.BackgroundTransparency = 0.95
+            tabStroke.Transparency = 0.8
+        end
+
+        UICorner.CornerRadius = UDim.new(0, 6)
+        UICorner.Parent = tabButton
+        table.insert(Tabs, tabName)
+
+        UpdateSize()
+        page.ChildAdded:Connect(UpdateSize)
+        page.ChildRemoved:Connect(UpdateSize)
+
+        tabButton.MouseButton1Click:Connect(function()
+            UpdateSize()
+            for i,v in next, Pages:GetChildren() do
+                if v:IsA("ScrollingFrame") then
+                    v.Visible = false
+                end
+            end
+            page.Visible = true
+            for i,v in next, tabFrames:GetChildren() do
+                if v:IsA("TextButton") then
+                    local vStroke = v:FindFirstChildOfClass("UIStroke")
+                    Utility:TweenObject(v, {BackgroundTransparency = 0.95}, 0.2)
+                    if vStroke then
+                        Utility:TweenObject(vStroke, {Transparency = 0.8, Color = themeList.SchemeColor}, 0.2)
+                    end
+                end
+            end
+            Utility:TweenObject(tabButton, {BackgroundTransparency = 0.15}, 0.2)
+            Utility:TweenObject(tabStroke, {Transparency = 0.2, Color = themeList.SchemeColor}, 0.2)
+        end)
+
+        local Sections = {}
+        local focusing = false
+        local viewDe = false
+
+        coroutine.wrap(function()
+            while wait() do
+                page.ScrollBarImageColor3 = themeList.SchemeColor
+                tabButton.TextColor3 = themeList.TextColor
+                tabButton.BackgroundColor3 = themeList.SchemeColor
+            end
+        end)()
+    
+        function Sections:NewSection(secName, hidden)
+            secName = secName or "Section"
+            local sectionFunctions = {}
+            local modules = {}
+	        hidden = hidden or false
+            local sectionFrame = Instance.new("Frame")
+            local sectionlistoknvm = Instance.new("UIListLayout")
+            local sectionHead = Instance.new("Frame")
+            local sHeadCorner = Instance.new("UICorner")
+            local sectionName = Instance.new("TextLabel")
+            local sectionInners = Instance.new("Frame")
+            local sectionElListing = Instance.new("UIListLayout")
+			
+            if hidden then
+                sectionHead.Visible = false
+            else
+                sectionHead.Visible = true
+            end
+
+            sectionFrame.Name = "sectionFrame"
+            sectionFrame.Parent = page
+            sectionFrame.BackgroundColor3 = themeList.Background
+            sectionFrame.BackgroundTransparency = 1
+            sectionFrame.BorderSizePixel = 0
+            
+            sectionlistoknvm.Name = "sectionlistoknvm"
+            sectionlistoknvm.Parent = sectionFrame
+            sectionlistoknvm.SortOrder = Enum.SortOrder.LayoutOrder
+            sectionlistoknvm.Padding = UDim.new(0, 5)
+
+            sectionHead.Name = "sectionHead"
+            sectionHead.Parent = sectionFrame
+            sectionHead.BackgroundColor3 = themeList.SchemeColor
+            sectionHead.BackgroundTransparency = 0.85
+            Objects[sectionHead] = "BackgroundColor3"
+            sectionHead.Size = UDim2.new(0, 352, 0, 26)
+            CreateBorderStroke(sectionHead, themeList.SchemeColor, 1, 0.7)
+
+            sHeadCorner.CornerRadius = UDim.new(0, 6)
+            sHeadCorner.Parent = sectionHead
+
+            sectionName.Name = "sectionName"
+            sectionName.Parent = sectionHead
+            sectionName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            sectionName.BackgroundTransparency = 1.000
+            sectionName.Position = UDim2.new(0.025, 0, 0, 0)
+            sectionName.Size = UDim2.new(0.975, 0, 1, 0)
+            sectionName.Font = Enum.Font.GothamBold
+            sectionName.Text = secName
+            sectionName.RichText = true
+            sectionName.TextColor3 = themeList.TextColor
+            Objects[sectionName] = "TextColor3"
+            sectionName.TextSize = 13.000
+            sectionName.TextXAlignment = Enum.TextXAlignment.Left
+               
+            sectionInners.Name = "sectionInners"
+            sectionInners.Parent = sectionFrame
+            sectionInners.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            sectionInners.BackgroundTransparency = 1.000
+
+            sectionElListing.Name = "sectionElListing"
+            sectionElListing.Parent = sectionInners
+            sectionElListing.SortOrder = Enum.SortOrder.LayoutOrder
+            sectionElListing.Padding = UDim.new(0, 4)
+
+            coroutine.wrap(function()
+                while wait() do
+                    sectionHead.BackgroundColor3 = themeList.SchemeColor
+                    sectionName.TextColor3 = themeList.TextColor
+                end
+            end)()
+
+            local function updateSectionFrame()
+                local innerSc = sectionElListing.AbsoluteContentSize
+                sectionInners.Size = UDim2.new(1, 0, 0, innerSc.Y)
+                local frameSc = sectionlistoknvm.AbsoluteContentSize
+                sectionFrame.Size = UDim2.new(0, 352, 0, frameSc.Y)
+            end
+            
+            sectionElListing:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSectionFrame)
+            updateSectionFrame()
+            UpdateSize()
+
+            local Elements = {}
+
+            -- ==== HÀM TẠO NÚT BẤM CẢI TIẾN ====
+            function Elements:NewButton(bname, tipINf, callback)
+                local ButtonFunction = {}
+                tipINf = tipINf or "Mẹo: Nhấn nút để kích hoạt chức năng!"
+                bname = bname or "Click Me!"
+                callback = callback or function() end
+
+                local buttonElement = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                local btnInfo = Instance.new("TextLabel")
+                local viewInfo = Instance.new("ImageButton")
+                local touch = Instance.new("ImageLabel")
+                local elementStroke = CreateBorderStroke(buttonElement, themeList.SchemeColor, 1, 0.8)
+
+                table.insert(modules, bname)
+
+                buttonElement.Name = bname
+                buttonElement.Parent = sectionInners
+                buttonElement.BackgroundColor3 = themeList.ElementColor
+                buttonElement.BackgroundTransparency = 0.25
+                buttonElement.ClipsDescendants = true
+                buttonElement.Size = UDim2.new(0, 352, 0, 34)
+                buttonElement.AutoButtonColor = false
+                buttonElement.Font = Enum.Font.SourceSans
+                buttonElement.Text = ""
+                buttonElement.TextColor3 = Color3.fromRGB(0, 0, 0)
+                buttonElement.TextSize = 14.000
+                Objects[buttonElement] = "BackgroundColor3"
+
+                UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = buttonElement
+
+                viewInfo.Name = "viewInfo"
+                viewInfo.Parent = buttonElement
+                viewInfo.BackgroundTransparency = 1.000
+                viewInfo.LayoutOrder = 9
+                viewInfo.Position = UDim2.new(0.930000007, 0, 0.18, 0)
+                viewInfo.Size = UDim2.new(0, 20, 0, 20)
+                viewInfo.ZIndex = 2
+                viewInfo.Image = "rbxassetid://3926305904"
+                viewInfo.ImageColor3 = themeList.SchemeColor
+                Objects[viewInfo] = "ImageColor3"
+                viewInfo.ImageRectOffset = Vector2.new(764, 764)
+                viewInfo.ImageRectSize = Vector2.new(36, 36)
+
+                local moreInfo = Instance.new("TextLabel")
+                local UICorner2 = Instance.new("UICorner")
+
+                moreInfo.Name = "TipMore"
+                moreInfo.Parent = infoContainer
+                moreInfo.BackgroundColor3 = themeList.ElementColor
+                moreInfo.BackgroundTransparency = 0.1
+                moreInfo.Position = UDim2.new(0, 0, 2, 0)
+                moreInfo.Size = UDim2.new(0, 353, 0, 33)
+                moreInfo.ZIndex = 9
+                moreInfo.Font = Enum.Font.GothamSemibold
+                moreInfo.Text = "  "..tipINf
+                moreInfo.RichText = true
+                moreInfo.TextColor3 = themeList.TextColor
+                moreInfo.TextSize = 13.000
+                moreInfo.TextXAlignment = Enum.TextXAlignment.Left
+                CreateBorderStroke(moreInfo, themeList.SchemeColor, 1, 0.5)
+
+                UICorner2.CornerRadius = UDim.new(0, 6)
+                UICorner2.Parent = moreInfo
+
+                touch.Name = "touch"
+                touch.Parent = buttonElement
+                touch.BackgroundTransparency = 1.000
+                touch.Position = UDim2.new(0.02, 0, 0.2, 0)
+                touch.Size = UDim2.new(0, 20, 0, 20)
+                touch.Image = "rbxassetid://3926305904"
+                touch.ImageColor3 = themeList.SchemeColor
+                Objects[touch] = "SchemeColor"
+                touch.ImageRectOffset = Vector2.new(84, 204)
+                touch.ImageRectSize = Vector2.new(36, 36)
+
+                btnInfo.Name = "btnInfo"
+                btnInfo.Parent = buttonElement
+                btnInfo.BackgroundTransparency = 1.000
+                btnInfo.Position = UDim2.new(0.095, 0, 0.25, 0)
+                btnInfo.Size = UDim2.new(0, 314, 0, 16)
+                btnInfo.Font = Enum.Font.GothamSemibold
+                btnInfo.Text = bname
+                btnInfo.RichText = true
+                btnInfo.TextColor3 = themeList.TextColor
+                Objects[btnInfo] = "TextColor3"
+                btnInfo.TextSize = 13.500
+                btnInfo.TextXAlignment = Enum.TextXAlignment.Left
+
+                updateSectionFrame()
+                UpdateSize()
+
+                buttonElement.MouseButton1Click:Connect(function()
+                    if not focusing then
+                        callback()
+                        -- Hiệu ứng bóp giãn nhẹ & nháy sáng tương lai cực đã mắt
+                        Utility:TweenObject(buttonElement, {BackgroundTransparency = 0.05, BackgroundColor3 = themeList.SchemeColor}, 0.08)
+                        Utility:TweenObject(elementStroke, {Color = Color3.fromRGB(255, 255, 255), Transparency = 0.1}, 0.08)
+                        wait(0.08)
+                        Utility:TweenObject(buttonElement, {BackgroundTransparency = 0.25, BackgroundColor3 = themeList.ElementColor}, 0.15)
+                        Utility:TweenObject(elementStroke, {Color = themeList.SchemeColor, Transparency = 0.8}, 0.15)
+                    else
+                        for i,v in next, infoContainer:GetChildren() do
+                            Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        end
+                        focusing = false
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                    end
+                end)
+
+                local hovering = false
+                buttonElement.MouseEnter:Connect(function()
+                    if not focusing then
+                        hovering = true
+                        Utility:TweenObject(buttonElement, {BackgroundTransparency = 0.12}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.3}, 0.15)
+                    end
+                end)
+                buttonElement.MouseLeave:Connect(function()
+                    if not focusing then 
+                        hovering = false
+                        Utility:TweenObject(buttonElement, {BackgroundTransparency = 0.25}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.8}, 0.15)
+                    end
+                end)
+
+                viewInfo.MouseButton1Click:Connect(function()
+                    if not viewDe then
+                        viewDe = true
+                        focusing = true
+                        for i,v in next, infoContainer:GetChildren() do
+                            if v ~= moreInfo then
+                                Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                            end
+                        end
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,0,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 0.5}, 0.2)
+                        wait(1.5)
+                        focusing = false
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                        wait(0.2)
+                        viewDe = false
+                    end
+                end)
+
+                coroutine.wrap(function()
+                    while wait() do
+                        if not hovering then
+                            buttonElement.BackgroundColor3 = themeList.ElementColor
+                        end
+                        viewInfo.ImageColor3 = themeList.SchemeColor
+                        moreInfo.BackgroundColor3 = themeList.ElementColor
+                        moreInfo.TextColor3 = themeList.TextColor
+                        touch.ImageColor3 = themeList.SchemeColor
+                        btnInfo.TextColor3 = themeList.TextColor
+                    end
+                end)()
+                
+                function ButtonFunction:UpdateButton(newTitle)
+                    btnInfo.Text = newTitle
+                end
+                return ButtonFunction
+            end
+
+            -- ==== HÀM TẠO NHẬP LIỆU TEXTBOX ====
+            function Elements:NewTextBox(tname, tTip, callback)
+                tname = tname or "Textbox"
+                tTip = tTip or "Nhập dữ liệu vào đây"
+                callback = callback or function() end
+                
+                local textboxElement = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                local viewInfo = Instance.new("ImageButton")
+                local write = Instance.new("ImageLabel")
+                local TextBox = Instance.new("TextBox")
+                local UICorner_2 = Instance.new("UICorner")
+                local togName = Instance.new("TextLabel")
+                local elementStroke = CreateBorderStroke(textboxElement, themeList.SchemeColor, 1, 0.8)
+
+                textboxElement.Name = "textboxElement"
+                textboxElement.Parent = sectionInners
+                textboxElement.BackgroundColor3 = themeList.ElementColor
+                textboxElement.BackgroundTransparency = 0.25
+                textboxElement.ClipsDescendants = true
+                textboxElement.Size = UDim2.new(0, 352, 0, 34)
+                textboxElement.AutoButtonColor = false
+                textboxElement.Font = Enum.Font.SourceSans
+                textboxElement.Text = ""
+                textboxElement.TextColor3 = Color3.fromRGB(0, 0, 0)
+                textboxElement.TextSize = 14.000
+
+                UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = textboxElement
+
+                viewInfo.Name = "viewInfo"
+                viewInfo.Parent = textboxElement
+                viewInfo.BackgroundTransparency = 1.000
+                viewInfo.Position = UDim2.new(0.930000007, 0, 0.18, 0)
+                viewInfo.Size = UDim2.new(0, 20, 0, 20)
+                viewInfo.ZIndex = 2
+                viewInfo.Image = "rbxassetid://3926305904"
+                viewInfo.ImageColor3 = themeList.SchemeColor
+                viewInfo.ImageRectOffset = Vector2.new(764, 764)
+                viewInfo.ImageRectSize = Vector2.new(36, 36)
+
+                write.Name = "write"
+                write.Parent = textboxElement
+                write.BackgroundTransparency = 1.000
+                write.Position = UDim2.new(0.02, 0, 0.2, 0)
+                write.Size = UDim2.new(0, 20, 0, 20)
+                write.Image = "rbxassetid://3926305904"
+                write.ImageColor3 = themeList.SchemeColor
+                write.ImageRectOffset = Vector2.new(324, 604)
+                write.ImageRectSize = Vector2.new(36, 36)
+
+                TextBox.Parent = textboxElement
+                TextBox.BackgroundColor3 = themeList.Background
+                TextBox.BackgroundTransparency = 0.4
+                TextBox.BorderSizePixel = 0
+                TextBox.Position = UDim2.new(0.48, 0, 0.18, 0)
+                TextBox.Size = UDim2.new(0, 150, 0, 22)
+                TextBox.Font = Enum.Font.Gotham
+                TextBox.PlaceholderColor3 = Color3.fromRGB(130, 130, 130)
+                TextBox.PlaceholderText = "Nhấp và gõ..."
+                TextBox.Text = ""
+                TextBox.TextColor3 = themeList.TextColor
+                TextBox.TextSize = 12.000
+                CreateBorderStroke(TextBox, themeList.SchemeColor, 1, 0.7)
+
+                UICorner_2.CornerRadius = UDim.new(0, 4)
+                UICorner_2.Parent = TextBox
+
+                togName.Name = "togName"
+                togName.Parent = textboxElement
+                togName.BackgroundTransparency = 1.000
+                togName.Position = UDim2.new(0.095, 0, 0.25, 0)
+                togName.Size = UDim2.new(0, 138, 0, 16)
+                togName.Font = Enum.Font.GothamSemibold
+                togName.Text = tname
+                togName.RichText = true
+                togName.TextColor3 = themeList.TextColor
+                togName.TextSize = 13.500
+                togName.TextXAlignment = Enum.TextXAlignment.Left
+
+                local moreInfo = Instance.new("TextLabel")
+                local UICorner3 = Instance.new("UICorner")
+
+                moreInfo.Name = "TipMore"
+                moreInfo.Parent = infoContainer
+                moreInfo.BackgroundColor3 = themeList.ElementColor
+                moreInfo.BackgroundTransparency = 0.1
+                moreInfo.Position = UDim2.new(0, 0, 2, 0)
+                moreInfo.Size = UDim2.new(0, 353, 0, 33)
+                moreInfo.ZIndex = 9
+                moreInfo.Font = Enum.Font.GothamSemibold
+                moreInfo.RichText = true
+                moreInfo.Text = "  "..tTip
+                moreInfo.TextColor3 = themeList.TextColor
+                moreInfo.TextSize = 13.000
+                moreInfo.TextXAlignment = Enum.TextXAlignment.Left
+                CreateBorderStroke(moreInfo, themeList.SchemeColor, 1, 0.5)
+
+                UICorner3.CornerRadius = UDim.new(0, 6)
+                UICorner3.Parent = moreInfo
+
+                updateSectionFrame()
+                UpdateSize()
+            
+                local hovering = false
+                textboxElement.MouseEnter:Connect(function()
+                    if not focusing then
+                        hovering = true
+                        Utility:TweenObject(textboxElement, {BackgroundTransparency = 0.12}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.3}, 0.15)
+                    end 
+                end)
+
+                textboxElement.MouseLeave:Connect(function()
+                    if not focusing then
+                        hovering = false
+                        Utility:TweenObject(textboxElement, {BackgroundTransparency = 0.25}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.8}, 0.15)
+                    end
+                end)
+
+                TextBox.FocusLost:Connect(function(EnterPressed)
+                    if focusing then
+                        for i,v in next, infoContainer:GetChildren() do
+                            Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        end
+                        focusing = false
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                    end
+                    if not EnterPressed then 
+                        return
+                    else
+                        callback(TextBox.Text)
+                        wait(0.18)
+                        TextBox.Text = ""  
+                    end
+                end)
+
+                viewInfo.MouseButton1Click:Connect(function()
+                    if not viewDe then
+                        viewDe = true
+                        focusing = true
+                        for i,v in next, infoContainer:GetChildren() do
+                            if v ~= moreInfo then
+                                Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                            end
+                        end
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,0,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 0.5}, 0.2)
+                        wait(1.5)
+                        focusing = false
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                        wait(0.2)
+                        viewDe = false
+                    end
+                end)
+
+                coroutine.wrap(function()
+                    while wait() do
+                        if not hovering then
+                            textboxElement.BackgroundColor3 = themeList.ElementColor
+                        end
+                        TextBox.BackgroundColor3 = themeList.Background
+                        viewInfo.ImageColor3 = themeList.SchemeColor
+                        moreInfo.BackgroundColor3 = themeList.ElementColor
+                        moreInfo.TextColor3 = themeList.TextColor
+                        write.ImageColor3 = themeList.SchemeColor
+                        togName.TextColor3 = themeList.TextColor
+                        TextBox.TextColor3 = themeList.TextColor
+                    end
+                end)()
+            end 
+
+            -- ==== HÀM TẠO NÚT GẠT TOGGLE DẠNG SLIDE CHUẨN FUTURE ====
+            function Elements:NewToggle(tname, nTip, callback)
+                local TogFunction = {}
+                tname = tname or "Toggle"
+                nTip = nTip or "In trạng thái Bật/Tắt"
+                callback = callback or function() end
+                local toggled = false
+                table.insert(SettingsT, tname)
+
+                local toggleElement = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                local togName = Instance.new("TextLabel")
+                local viewInfo = Instance.new("ImageButton")
+                local elementStroke = CreateBorderStroke(toggleElement, themeList.SchemeColor, 1, 0.8)
+
+                -- Tạo dải Slider iOS / Futuristic
+                local sliderBack = Instance.new("Frame")
+                local sliderBackCorner = Instance.new("UICorner")
+                local sliderCircle = Instance.new("Frame")
+                local sliderCircleCorner = Instance.new("UICorner")
+
+                toggleElement.Name = "toggleElement"
+                toggleElement.Parent = sectionInners
+                toggleElement.BackgroundColor3 = themeList.ElementColor
+                toggleElement.BackgroundTransparency = 0.25
+                toggleElement.ClipsDescendants = true
+                toggleElement.Size = UDim2.new(0, 352, 0, 34)
+                toggleElement.AutoButtonColor = false
+                toggleElement.Font = Enum.Font.SourceSans
+                toggleElement.Text = ""
+                toggleElement.TextColor3 = Color3.fromRGB(0, 0, 0)
+                toggleElement.TextSize = 14.000
+
+                UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = toggleElement
+
+                sliderBack.Name = "sliderBack"
+                sliderBack.Parent = toggleElement
+                sliderBack.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+                sliderBack.Position = UDim2.new(0.02, 0, 0.5, -9)
+                sliderBack.Size = UDim2.new(0, 34, 0, 18)
+                CreateBorderStroke(sliderBack, Color3.fromRGB(0, 0, 0), 1, 0.8)
+
+                sliderBackCorner.CornerRadius = UDim.new(1, 0)
+                sliderBackCorner.Parent = sliderBack
+
+                sliderCircle.Name = "sliderCircle"
+                sliderCircle.Parent = sliderBack
+                sliderCircle.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+                sliderCircle.Position = UDim2.new(0, 2, 0.5, -7)
+                sliderCircle.Size = UDim2.new(0, 14, 0, 14)
+
+                sliderCircleCorner.CornerRadius = UDim.new(1, 0)
+                sliderCircleCorner.Parent = sliderCircle
+
+                togName.Name = "togName"
+                togName.Parent = toggleElement
+                togName.BackgroundTransparency = 1.000
+                togName.Position = UDim2.new(0.14, 0, 0.25, 0)
+                togName.Size = UDim2.new(0, 250, 0, 16)
+                togName.Font = Enum.Font.GothamSemibold
+                togName.Text = tname
+                togName.RichText = true
+                togName.TextColor3 = themeList.TextColor
+                togName.TextSize = 13.500
+                togName.TextXAlignment = Enum.TextXAlignment.Left
+
+                viewInfo.Name = "viewInfo"
+                viewInfo.Parent = toggleElement
+                viewInfo.BackgroundTransparency = 1.000
+                viewInfo.Position = UDim2.new(0.930000007, 0, 0.18, 0)
+                viewInfo.Size = UDim2.new(0, 20, 0, 20)
+                viewInfo.ZIndex = 2
+                viewInfo.Image = "rbxassetid://3926305904"
+                viewInfo.ImageColor3 = themeList.SchemeColor
+                viewInfo.ImageRectOffset = Vector2.new(764, 764)
+                viewInfo.ImageRectSize = Vector2.new(36, 36)
+
+                local moreInfo = Instance.new("TextLabel")
+                local UICorner2 = Instance.new("UICorner")
+    
+                moreInfo.Name = "TipMore"
+                moreInfo.Parent = infoContainer
+                moreInfo.BackgroundColor3 = themeList.ElementColor
+                moreInfo.BackgroundTransparency = 0.1
+                moreInfo.Position = UDim2.new(0, 0, 2, 0)
+                moreInfo.Size = UDim2.new(0, 353, 0, 33)
+                moreInfo.ZIndex = 9
+                moreInfo.Font = Enum.Font.GothamSemibold
+                moreInfo.RichText = true
+                moreInfo.Text = "  "..nTip
+                moreInfo.TextColor3 = themeList.TextColor
+                moreInfo.TextSize = 13.000
+                moreInfo.TextXAlignment = Enum.TextXAlignment.Left
+                CreateBorderStroke(moreInfo, themeList.SchemeColor, 1, 0.5)
+
+                UICorner2.CornerRadius = UDim.new(0, 6)
+                UICorner2.Parent = moreInfo
+
+                updateSectionFrame()
+                UpdateSize()
+
+                toggleElement.MouseButton1Click:Connect(function()
+                    if not focusing then
+                        toggled = not toggled
+                        if toggled then
+                            -- Chuyển động lướt slide sang phải cực kỳ chuyên nghiệp
+                            Utility:TweenObject(sliderCircle, {Position = UDim2.new(1, -16, 0.5, -7)}, 0.18)
+                            Utility:TweenObject(sliderBack, {BackgroundColor3 = themeList.SchemeColor}, 0.18)
+                            Utility:TweenObject(sliderCircle, {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}, 0.18)
+                        else
+                            Utility:TweenObject(sliderCircle, {Position = UDim2.new(0, 2, 0.5, -7)}, 0.18)
+                            Utility:TweenObject(sliderBack, {BackgroundColor3 = Color3.fromRGB(45, 45, 52)}, 0.18)
+                            Utility:TweenObject(sliderCircle, {BackgroundColor3 = Color3.fromRGB(240, 240, 240)}, 0.18)
+                        end
+                        pcall(callback, toggled)
+                    else
+                        for i,v in next, infoContainer:GetChildren() do
+                            Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        end
+                        focusing = false
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                    end
+                end)
+
+                local hovering = false
+                toggleElement.MouseEnter:Connect(function()
+                    if not focusing then
+                        hovering = true
+                        Utility:TweenObject(toggleElement, {BackgroundTransparency = 0.12}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.3}, 0.15)
+                    end 
+                end)
+                toggleElement.MouseLeave:Connect(function()
+                    if not focusing then
+                        hovering = false
+                        Utility:TweenObject(toggleElement, {BackgroundTransparency = 0.25}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.8}, 0.15)
+                    end
+                end)
+
+                viewInfo.MouseButton1Click:Connect(function()
+                    if not viewDe then
+                        viewDe = true
+                        focusing = true
+                        for i,v in next, infoContainer:GetChildren() do
+                            if v ~= moreInfo then
+                                Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                            end
+                        end
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,0,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 0.5}, 0.2)
+                        wait(1.5)
+                        focusing = false
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                        wait(0.2)
+                        viewDe = false
+                    end
+                end)
+
+                coroutine.wrap(function()
+                    while wait() do
+                        if not hovering then
+                            toggleElement.BackgroundColor3 = themeList.ElementColor
+                        end
+                        if not toggled then
+                            sliderBack.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+                        else
+                            sliderBack.BackgroundColor3 = themeList.SchemeColor
+                        end
+                        togName.TextColor3 = themeList.TextColor
+                        viewInfo.ImageColor3 = themeList.SchemeColor
+                        moreInfo.BackgroundColor3 = themeList.ElementColor
+                        moreInfo.TextColor3 = themeList.TextColor
+                    end
+                end)()
+
+                function TogFunction:UpdateToggle(newText, isTogOn)
+                    if newText ~= nil and typeof(newText) == "string" then
+                        togName.Text = newText
+                    end
+                    if isTogOn ~= nil then
+                        toggled = isTogOn
+                        if toggled then
+                            Utility:TweenObject(sliderCircle, {Position = UDim2.new(1, -16, 0.5, -7)}, 0.18)
+                            Utility:TweenObject(sliderCircle, {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}, 0.18)
+                        else
+                            Utility:TweenObject(sliderCircle, {Position = UDim2.new(0, 2, 0.5, -7)}, 0.18)
+                            Utility:TweenObject(sliderCircle, {BackgroundColor3 = Color3.fromRGB(240, 240, 240)}, 0.18)
+                        end
+                        pcall(callback, toggled)
+                    end
+                end
+                return TogFunction
+            end
+
+            -- ==== HÀM TẠO THANH KÉO SLIDER ====
+            function Elements:NewSlider(slidInf, slidTip, maxvalue, minvalue, callback)
+                slidInf = slidInf or "Slider"
+                slidTip = slidTip or "Kéo để thay đổi giá trị"
+                maxvalue = maxvalue or 500
+                minvalue = minvalue or 16
+                callback = callback or function() end
+
+                local sliderElement = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                local togName = Instance.new("TextLabel")
+                local viewInfo = Instance.new("ImageButton")
+                local sliderBtn = Instance.new("TextButton")
+                local UICorner_2 = Instance.new("UICorner")
+                local sliderDrag = Instance.new("Frame")
+                local UICorner_3 = Instance.new("UICorner")
+                local write = Instance.new("ImageLabel")
+                local val = Instance.new("TextLabel")
+                local elementStroke = CreateBorderStroke(sliderElement, themeList.SchemeColor, 1, 0.8)
+
+                sliderElement.Name = "sliderElement"
+                sliderElement.Parent = sectionInners
+                sliderElement.BackgroundColor3 = themeList.ElementColor
+                sliderElement.BackgroundTransparency = 0.25
+                sliderElement.ClipsDescendants = true
+                sliderElement.Size = UDim2.new(0, 352, 0, 34)
+                sliderElement.AutoButtonColor = false
+                sliderElement.Font = Enum.Font.SourceSans
+                sliderElement.Text = ""
+                sliderElement.TextColor3 = Color3.fromRGB(0, 0, 0)
+                sliderElement.TextSize = 14.000
+
+                UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = sliderElement
+
+                togName.Name = "togName"
+                togName.Parent = sliderElement
+                togName.BackgroundTransparency = 1.000
+                togName.Position = UDim2.new(0.095, 0, 0.25, 0)
+                togName.Size = UDim2.new(0, 138, 0, 16)
+                togName.Font = Enum.Font.GothamSemibold
+                togName.Text = slidInf
+                togName.RichText = true
+                togName.TextColor3 = themeList.TextColor
+                togName.TextSize = 13.500
+                togName.TextXAlignment = Enum.TextXAlignment.Left
+
+                viewInfo.Name = "viewInfo"
+                viewInfo.Parent = sliderElement
+                viewInfo.BackgroundTransparency = 1.000
+                viewInfo.Position = UDim2.new(0.930000007, 0, 0.18, 0)
+                viewInfo.Size = UDim2.new(0, 20, 0, 20)
+                viewInfo.ZIndex = 2
+                viewInfo.Image = "rbxassetid://3926305904"
+                viewInfo.ImageColor3 = themeList.SchemeColor
+                viewInfo.ImageRectOffset = Vector2.new(764, 764)
+                viewInfo.ImageRectSize = Vector2.new(36, 36)
+
+                sliderBtn.Name = "sliderBtn"
+                sliderBtn.Parent = sliderElement
+                sliderBtn.BackgroundColor3 = themeList.Background
+                sliderBtn.BackgroundTransparency = 0.4
+                sliderBtn.BorderSizePixel = 0
+                sliderBtn.Position = UDim2.new(0.48, 0, 0.43, 0)
+                sliderBtn.Size = UDim2.new(0, 149, 0, 6)
+                sliderBtn.AutoButtonColor = false
+                sliderBtn.Text = ""
+
+                UICorner_2.CornerRadius = UDim.new(1, 0)
+                UICorner_2.Parent = sliderBtn
+
+                sliderDrag.Name = "sliderDrag"
+                sliderDrag.Parent = sliderBtn
+                sliderDrag.BackgroundColor3 = themeList.SchemeColor
+                sliderDrag.BorderSizePixel = 0
+                sliderDrag.Size = UDim2.new(0, 0, 1, 0)
+
+                UICorner_3.CornerRadius = UDim.new(1, 0)
+                UICorner_3.Parent = sliderDrag
+
+                -- Điểm tròn Drag Thumb tinh tế ở đầu mút của thanh trượt
+                local sliderThumb = Instance.new("Frame")
+                sliderThumb.Name = "sliderThumb"
+                sliderThumb.Parent = sliderDrag
+                sliderThumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                sliderThumb.Position = UDim2.new(1, -6, 0.5, -6)
+                sliderThumb.Size = UDim2.new(0, 12, 0, 12)
+                local sliderThumbCorner = Instance.new("UICorner")
+                sliderThumbCorner.CornerRadius = UDim.new(1, 0)
+                sliderThumbCorner.Parent = sliderThumb
+                CreateBorderStroke(sliderThumb, themeList.SchemeColor, 1.5, 0)
+
+                write.Name = "write"
+                write.Parent = sliderElement
+                write.BackgroundTransparency = 1.000
+                write.Position = UDim2.new(0.02, 0, 0.2, 0)
+                write.Size = UDim2.new(0, 20, 0, 20)
+                write.Image = "rbxassetid://3926307971"
+                write.ImageColor3 = themeList.SchemeColor
+                write.ImageRectOffset = Vector2.new(404, 164)
+                write.ImageRectSize = Vector2.new(36, 36)
+
+                val.Name = "val"
+                val.Parent = sliderElement
+                val.BackgroundTransparency = 1.000
+                val.Position = UDim2.new(0.35, 0, 0.25, 0)
+                val.Size = UDim2.new(0, 41, 0, 16)
+                val.Font = Enum.Font.GothamBold
+                val.Text = tostring(minvalue)
+                val.TextColor3 = themeList.TextColor
+                val.TextSize = 12.000
+                val.TextTransparency = 0.000
+                val.TextXAlignment = Enum.TextXAlignment.Right
+
+                local moreInfo = Instance.new("TextLabel")
+                local UICorner4 = Instance.new("UICorner")
+
+                moreInfo.Name = "TipMore"
+                moreInfo.Parent = infoContainer
+                moreInfo.BackgroundColor3 = themeList.ElementColor
+                moreInfo.BackgroundTransparency = 0.1
+                moreInfo.Position = UDim2.new(0, 0, 2, 0)
+                moreInfo.Size = UDim2.new(0, 353, 0, 33)
+                moreInfo.ZIndex = 9
+                moreInfo.Font = Enum.Font.GothamSemibold
+                moreInfo.Text = "  "..slidTip
+                moreInfo.TextColor3 = themeList.TextColor
+                moreInfo.TextSize = 13.000
+                moreInfo.RichText = true
+                moreInfo.TextXAlignment = Enum.TextXAlignment.Left
+                CreateBorderStroke(moreInfo, themeList.SchemeColor, 1, 0.5)
+
+                UICorner4.CornerRadius = UDim.new(0, 6)
+                UICorner4.Parent = moreInfo
+
+                updateSectionFrame()
+                UpdateSize()
+
+                local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+                local uis = game:GetService("UserInputService")
+                local hovering = false
+
+                sliderElement.MouseEnter:Connect(function()
+                    if not focusing then
+                        hovering = true
+                        Utility:TweenObject(sliderElement, {BackgroundTransparency = 0.12}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.3}, 0.15)
+                    end 
+                end)
+                sliderElement.MouseLeave:Connect(function()
+                    if not focusing then
+                        hovering = false
+                        Utility:TweenObject(sliderElement, {BackgroundTransparency = 0.25}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.8}, 0.15)
+                    end
+                end)        
+
+                coroutine.wrap(function()
+                    while wait() do
+                        if not hovering then
+                            sliderElement.BackgroundColor3 = themeList.ElementColor
+                        end
+                        moreInfo.TextColor3 = themeList.TextColor
+                        moreInfo.BackgroundColor3 = themeList.ElementColor
+                        val.TextColor3 = themeList.SchemeColor
+                        write.ImageColor3 = themeList.SchemeColor
+                        togName.TextColor3 = themeList.TextColor
+                        viewInfo.ImageColor3 = themeList.SchemeColor
+                        sliderBtn.BackgroundColor3 = themeList.Background
+                        sliderDrag.BackgroundColor3 = themeList.SchemeColor
+                    end
+                end)()
+
+                local function SetSliderValue(percentage)
+                    percentage = math.clamp(percentage, 0, 1)
+                    sliderDrag.Size = UDim2.new(percentage, 0, 1, 0)
+                    local calculatedVal = math.floor(minvalue + (maxvalue - minvalue) * percentage)
+                    val.Text = tostring(calculatedVal)
+                    pcall(callback, calculatedVal)
+                end
+
+                sliderBtn.MouseButton1Down:Connect(function()
+                    if not focusing then
+                        local startX = sliderBtn.AbsolutePosition.X
+                        local width = sliderBtn.AbsoluteSize.X
+                        local initialPercentage = (mouse.X - startX) / width
+                        SetSliderValue(initialPercentage)
+
+                        local moveconnection
+                        moveconnection = mouse.Move:Connect(function()
+                            local percentage = (mouse.X - startX) / width
+                            SetSliderValue(percentage)
+                        end)
+
+                        local releaseconnection
+                        releaseconnection = uis.InputEnded:Connect(function(inputObj)
+                            if inputObj.UserInputType == Enum.UserInputType.MouseButton1 then
+                                moveconnection:Disconnect()
+                                releaseconnection:Disconnect()
+                            end
+                        end)
+                    else
+                        for i,v in next, infoContainer:GetChildren() do
+                            Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        end
+                        focusing = false
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                    end
+                end)
+
+                viewInfo.MouseButton1Click:Connect(function()
+                    if not viewDe then
+                        viewDe = true
+                        focusing = true
+                        for i,v in next, infoContainer:GetChildren() do
+                            if v ~= moreInfo then
+                                Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                            end
+                        end
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,0,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 0.5}, 0.2)
+                        wait(1.5)
+                        focusing = false
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                        wait(0.2)
+                        viewDe = false
+                    end
+                end)        
+            end
+
+            -- ==== HÀM TẠO DANH SÁCH DROPDOWN ====
+            function Elements:NewDropdown(dropname, dropinf, list, callback)
+                local DropFunction = {}
+                dropname = dropname or "Dropdown"
+                list = list or {}
+                dropinf = dropinf or "Chọn một giá trị"
+                callback = callback or function() end   
+
+                local opened = false
+                local DropYSize = 34
+
+                local dropFrame = Instance.new("Frame")
+                local dropOpen = Instance.new("TextButton")
+                local listImg = Instance.new("ImageLabel")
+                local itemTextbox = Instance.new("TextLabel")
+                local viewInfo = Instance.new("ImageButton")
+                local UICorner = Instance.new("UICorner")
+                local UIListLayout = Instance.new("UIListLayout")
+                local elementStroke = CreateBorderStroke(dropFrame, themeList.SchemeColor, 1, 0.8)
+
+                dropFrame.Name = "dropFrame"
+                dropFrame.Parent = sectionInners
+                dropFrame.BackgroundColor3 = themeList.Background
+                dropFrame.BackgroundTransparency = 1
+                dropFrame.BorderSizePixel = 0
+                dropFrame.Size = UDim2.new(0, 352, 0, 34)
+                dropFrame.ClipsDescendants = true
+                
+                dropOpen.Name = "dropOpen"
+                dropOpen.Parent = dropFrame
+                dropOpen.BackgroundColor3 = themeList.ElementColor
+                dropOpen.BackgroundTransparency = 0.25
+                dropOpen.Size = UDim2.new(0, 352, 0, 34)
+                dropOpen.AutoButtonColor = false
+                dropOpen.Font = Enum.Font.SourceSans
+                dropOpen.Text = ""
+
+                UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = dropOpen
+
+                dropOpen.MouseButton1Click:Connect(function()
+                    if not focusing then
+                        if opened then
+                            opened = false
+                            dropFrame:TweenSize(UDim2.new(0, 352, 0, 34), "InOut", "Linear", 0.12)
+                            wait(0.12)
+                            updateSectionFrame()
+                            UpdateSize()
+                        else
+                            opened = true
+                            dropFrame:TweenSize(UDim2.new(0, 352, 0, UIListLayout.AbsoluteContentSize.Y), "InOut", "Linear", 0.12, true)
+                            wait(0.12)
+                            updateSectionFrame()
+                            UpdateSize()
+                        end
+                    else
+                        for i,v in next, infoContainer:GetChildren() do
+                            Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        end
+                        focusing = false
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                    end
+                end)
+
+                listImg.Name = "listImg"
+                listImg.Parent = dropOpen
+                listImg.BackgroundTransparency = 1.000
+                listImg.Position = UDim2.new(0.02, 0, 0.2, 0)
+                listImg.Size = UDim2.new(0, 20, 0, 20)
+                listImg.Image = "rbxassetid://3926305904"
+                listImg.ImageColor3 = themeList.SchemeColor
+                listImg.ImageRectOffset = Vector2.new(644, 364)
+                listImg.ImageRectSize = Vector2.new(36, 36)
+
+                itemTextbox.Name = "itemTextbox"
+                itemTextbox.Parent = dropOpen
+                itemTextbox.BackgroundTransparency = 1.000
+                itemTextbox.Position = UDim2.new(0.095, 0, 0.25, 0)
+                itemTextbox.Size = UDim2.new(0, 250, 0, 16)
+                itemTextbox.Font = Enum.Font.GothamSemibold
+                itemTextbox.Text = dropname
+                itemTextbox.RichText = true
+                itemTextbox.TextColor3 = themeList.TextColor
+                itemTextbox.TextSize = 13.500
+                itemTextbox.TextXAlignment = Enum.TextXAlignment.Left
+
+                viewInfo.Name = "viewInfo"
+                viewInfo.Parent = dropOpen
+                viewInfo.BackgroundTransparency = 1.000
+                viewInfo.Position = UDim2.new(0.930000007, 0, 0.18, 0)
+                viewInfo.Size = UDim2.new(0, 20, 0, 20)
+                viewInfo.ZIndex = 2
+                viewInfo.Image = "rbxassetid://3926305904"
+                viewInfo.ImageColor3 = themeList.SchemeColor
+                viewInfo.ImageRectOffset = Vector2.new(764, 764)
+                viewInfo.ImageRectSize = Vector2.new(36, 36)
+
+                UIListLayout.Parent = dropFrame
+                UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                UIListLayout.Padding = UDim.new(0, 3)
+
+                updateSectionFrame() 
+                UpdateSize()
+
+                local moreInfo = Instance.new("TextLabel")
+                local UICorner3 = Instance.new("UICorner")
+
+                moreInfo.Name = "TipMore"
+                moreInfo.Parent = infoContainer
+                moreInfo.BackgroundColor3 = themeList.ElementColor
+                moreInfo.BackgroundTransparency = 0.1
+                moreInfo.Position = UDim2.new(0, 0, 2, 0)
+                moreInfo.Size = UDim2.new(0, 353, 0, 33)
+                moreInfo.ZIndex = 9
+                moreInfo.RichText = true
+                moreInfo.Font = Enum.Font.GothamSemibold
+                moreInfo.Text = "  "..dropinf
+                moreInfo.TextColor3 = themeList.TextColor
+                moreInfo.TextSize = 13.000
+                moreInfo.TextXAlignment = Enum.TextXAlignment.Left
+                CreateBorderStroke(moreInfo, themeList.SchemeColor, 1, 0.5)
+
+                UICorner3.CornerRadius = UDim.new(0, 6)
+                UICorner3.Parent = moreInfo
+
+                local hovering = false
+                dropOpen.MouseEnter:Connect(function()
+                    if not focusing then
+                        hovering = true
+                        Utility:TweenObject(dropOpen, {BackgroundTransparency = 0.12}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.3}, 0.15)
+                    end 
+                end)
+                dropOpen.MouseLeave:Connect(function()
+                    if not focusing then
+                        hovering = false
+                        Utility:TweenObject(dropOpen, {BackgroundTransparency = 0.25}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.8}, 0.15)
+                    end
+                end)        
+
+                coroutine.wrap(function()
+                    while wait() do
+                        if not hovering then
+                            dropOpen.BackgroundColor3 = themeList.ElementColor
+                        end
+                        listImg.ImageColor3 = themeList.SchemeColor
+                        itemTextbox.TextColor3 = themeList.TextColor
+                        viewInfo.ImageColor3 = themeList.SchemeColor
+                        moreInfo.BackgroundColor3 = themeList.ElementColor
+                        moreInfo.TextColor3 = themeList.TextColor
+                    end
+                end)()
+
+                viewInfo.MouseButton1Click:Connect(function()
+                    if not viewDe then
+                        viewDe = true
+                        focusing = true
+                        for i,v in next, infoContainer:GetChildren() do
+                            if v ~= moreInfo then
+                                Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                            end
+                        end
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,0,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 0.5}, 0.2)
+                        wait(1.5)
+                        focusing = false
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                        wait(0.2)
+                        viewDe = false
+                    end
+                end)     
+
+                -- Hàm tạo các lựa chọn con trong Dropdown
+                local function BuildDropdownOptions()
+                    for i,v in next, list do
+                        local optionSelect = Instance.new("TextButton")
+                        local optionCorner = Instance.new("UICorner")
+                        local optionStroke = CreateBorderStroke(optionSelect, themeList.SchemeColor, 1, 0.95)
+
+                        optionSelect.Name = "optionSelect"
+                        optionSelect.Parent = dropFrame
+                        optionSelect.BackgroundColor3 = themeList.ElementColor
+                        optionSelect.BackgroundTransparency = 0.35
+                        optionSelect.Size = UDim2.new(0, 352, 0, 30)
+                        optionSelect.AutoButtonColor = false
+                        optionSelect.Font = Enum.Font.GothamSemibold
+                        optionSelect.Text = "  "..v
+                        optionSelect.TextColor3 = themeList.TextColor
+                        optionSelect.TextSize = 13.000
+                        optionSelect.TextXAlignment = Enum.TextXAlignment.Left
+
+                        optionCorner.CornerRadius = UDim.new(0, 5)
+                        optionCorner.Parent = optionSelect
+
+                        optionSelect.MouseButton1Click:Connect(function()
+                            if not focusing then
+                                opened = false
+                                callback(v)
+                                itemTextbox.Text = v
+                                dropFrame:TweenSize(UDim2.new(0, 352, 0, 34), 'InOut', 'Linear', 0.12)
+                                wait(0.12)
+                                updateSectionFrame()
+                                UpdateSize()
+                            else
+                                for i,val in next, infoContainer:GetChildren() do
+                                    Utility:TweenObject(val, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                                end
+                                focusing = false
+                                Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                            end
+                        end)
+
+                        local optionHover = false
+                        optionSelect.MouseEnter:Connect(function()
+                            optionHover = true
+                            Utility:TweenObject(optionSelect, {BackgroundTransparency = 0.15}, 0.1)
+                            Utility:TweenObject(optionStroke, {Transparency = 0.4}, 0.1)
+                        end)
+                        optionSelect.MouseLeave:Connect(function()
+                            optionHover = false
+                            Utility:TweenObject(optionSelect, {BackgroundTransparency = 0.35}, 0.1)
+                            Utility:TweenObject(optionStroke, {Transparency = 0.95}, 0.1)
+                        end)
+                    end
+                end
+
+                BuildDropdownOptions()
+
+                function DropFunction:Refresh(newList)
+                    newList = newList or {}
+                    for i,v in next, dropFrame:GetChildren() do
+                        if v.Name == "optionSelect" then
+                            v:Destroy()
+                        end
+                    end
+                    list = newList
+                    BuildDropdownOptions()
+                    if opened then
+                        dropFrame:TweenSize(UDim2.new(0, 352, 0, UIListLayout.AbsoluteContentSize.Y), "InOut", "Linear", 0.08, true)
+                        wait(0.08)
+                        updateSectionFrame()
+                        UpdateSize()
+                    end
+                end
+                return DropFunction
+            end
+
+            -- ==== HÀM TẠO CÀI ĐẶT PHÍM TẮT KEYBIND ====
+            function Elements:NewKeybind(keytext, keyinf, firstKey, callback)
+                keytext = keytext or "Keybind"
+                keyinf = keyinf or "Nhấn phím bất kỳ để gán"
+                callback = callback or function() end
+                
+                local oldKey = firstKey.Name
+                local keybindElement = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                local togName = Instance.new("TextLabel")
+                local viewInfo = Instance.new("ImageButton")
+                local touch = Instance.new("ImageLabel")
+                local togName_2 = Instance.new("TextLabel")
+                local elementStroke = CreateBorderStroke(keybindElement, themeList.SchemeColor, 1, 0.8)
+
+                keybindElement.Name = "keybindElement"
+                keybindElement.Parent = sectionInners
+                keybindElement.BackgroundColor3 = themeList.ElementColor
+                keybindElement.BackgroundTransparency = 0.25
+                keybindElement.ClipsDescendants = true
+                keybindElement.Size = UDim2.new(0, 352, 0, 34)
+                keybindElement.AutoButtonColor = false
+                keybindElement.Font = Enum.Font.SourceSans
+                keybindElement.Text = ""
+                keybindElement.TextColor3 = Color3.fromRGB(0, 0, 0)
+                keybindElement.TextSize = 14.000
+                
+                keybindElement.MouseButton1Click:connect(function() 
+                    if not focusing then
+                        togName_2.Text = ". . ."
+                        local inputObj, gameProcessed = game:GetService('UserInputService').InputBegan:wait()
+                        if inputObj.KeyCode.Name ~= "Unknown" then
+                            togName_2.Text = inputObj.KeyCode.Name
+                            oldKey = inputObj.KeyCode.Name
+                        end
+                    else
+                        for i,v in next, infoContainer:GetChildren() do
+                            Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        end
+                        focusing = false
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                    end
+                end)
+        
+                game:GetService("UserInputService").InputBegan:connect(function(current, ok) 
+                    if not ok then 
+                        if current.KeyCode.Name == oldKey then 
+                            callback()
+                        end
+                    end
+                end)
+
+                local moreInfo = Instance.new("TextLabel")
+                local UICorner1 = Instance.new("UICorner")
+
+                moreInfo.Name = "TipMore"
+                moreInfo.Parent = infoContainer
+                moreInfo.BackgroundColor3 = themeList.ElementColor
+                moreInfo.BackgroundTransparency = 0.1
+                moreInfo.Position = UDim2.new(0, 0, 2, 0)
+                moreInfo.Size = UDim2.new(0, 353, 0, 33)
+                moreInfo.ZIndex = 9
+                moreInfo.RichText = true
+                moreInfo.Font = Enum.Font.GothamSemibold
+                moreInfo.Text = "  "..keyinf
+                moreInfo.TextColor3 = themeList.TextColor
+                moreInfo.TextSize = 13.000
+                moreInfo.TextXAlignment = Enum.TextXAlignment.Left
+                CreateBorderStroke(moreInfo, themeList.SchemeColor, 1, 0.5)
+
+                UICorner1.CornerRadius = UDim.new(0, 6)
+                UICorner1.Parent = moreInfo
+                
+                togName.Name = "togName"
+                togName.Parent = keybindElement
+                togName.BackgroundTransparency = 1.000
+                togName.Position = UDim2.new(0.095, 0, 0.25, 0)
+                togName.Size = UDim2.new(0, 222, 0, 16)
+                togName.Font = Enum.Font.GothamSemibold
+                togName.Text = keytext
+                togName.RichText = true
+                togName.TextColor3 = themeList.TextColor
+                togName.TextSize = 13.500
+                togName.TextXAlignment = Enum.TextXAlignment.Left
+
+                viewInfo.Name = "viewInfo"
+                viewInfo.Parent = keybindElement
+                viewInfo.BackgroundTransparency = 1.000
+                viewInfo.Position = UDim2.new(0.930000007, 0, 0.18, 0)
+                viewInfo.Size = UDim2.new(0, 20, 0, 20)
+                viewInfo.ZIndex = 2
+                viewInfo.Image = "rbxassetid://3926305904"
+                viewInfo.ImageColor3 = themeList.SchemeColor
+                viewInfo.ImageRectOffset = Vector2.new(764, 764)
+                viewInfo.ImageRectSize = Vector2.new(36, 36)
+                
+                viewInfo.MouseButton1Click:Connect(function()
+                    if not viewDe then
+                        viewDe = true
+                        focusing = true
+                        for i,v in next, infoContainer:GetChildren() do
+                            if v ~= moreInfo then
+                                Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                            end
+                        end
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,0,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 0.5}, 0.2)
+                        wait(1.5)
+                        focusing = false
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                        wait(0.2)
+                        viewDe = false
+                    end
+                end)  
+
+                updateSectionFrame()
+                UpdateSize()
+
+                local hovering = false
+                keybindElement.MouseEnter:Connect(function()
+                    if not focusing then
+                        hovering = true
+                        Utility:TweenObject(keybindElement, {BackgroundTransparency = 0.12}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.3}, 0.15)
+                    end 
+                end)
+                keybindElement.MouseLeave:Connect(function()
+                    if not focusing then
+                        hovering = false
+                        Utility:TweenObject(keybindElement, {BackgroundTransparency = 0.25}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.8}, 0.15)
+                    end
+                end)        
+
+                UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = keybindElement
+
+                touch.Name = "touch"
+                touch.Parent = keybindElement
+                touch.BackgroundTransparency = 1.000
+                touch.Position = UDim2.new(0.02, 0, 0.2, 0)
+                touch.Size = UDim2.new(0, 20, 0, 20)
+                touch.Image = "rbxassetid://3926305904"
+                touch.ImageColor3 = themeList.SchemeColor
+                touch.ImageRectOffset = Vector2.new(364, 284)
+                touch.ImageRectSize = Vector2.new(36, 36)
+
+                togName_2.Name = "togName_2"
+                togName_2.Parent = keybindElement
+                togName_2.BackgroundTransparency = 1.000
+                togName_2.Position = UDim2.new(0.72, 0, 0.25, 0)
+                togName_2.Size = UDim2.new(0, 70, 0, 16)
+                togName_2.Font = Enum.Font.GothamBold
+                togName_2.Text = oldKey
+                togName_2.TextColor3 = themeList.SchemeColor
+                togName_2.TextSize = 13.000
+                togName_2.TextXAlignment = Enum.TextXAlignment.Right   
+
+                coroutine.wrap(function()
+                    while wait() do
+                        if not hovering then
+                            keybindElement.BackgroundColor3 = themeList.ElementColor
+                        end
+                        togName_2.TextColor3 = themeList.SchemeColor
+                        touch.ImageColor3 = themeList.SchemeColor
+                        viewInfo.ImageColor3 = themeList.SchemeColor
+                        togName.TextColor3 = themeList.TextColor
+                        moreInfo.TextColor3 = themeList.TextColor
+                        moreInfo.BackgroundColor3 = themeList.ElementColor
+                    end
+                end)()
+            end
+
+            -- ==== HÀM TẠO BẢNG CHỌN MÀU COLOR PICKER ====
+            function Elements:NewColorPicker(colText, colInf, defcolor, callback)
+                colText = colText or "Bảng chọn màu"
+                colInf = colInf or "Tùy chỉnh màu sắc phù hợp"
+                callback = callback or function() end
+                defcolor = defcolor or Color3.fromRGB(255,255,255)
+                
+                local h, s, v = Color3.toHSV(defcolor)
+                local mouse = game.Players.LocalPlayer:GetMouse()
+                local colorOpened = false
+
+                local colorElement = Instance.new("TextButton")
+                local UICorner = Instance.new("UICorner")
+                local colorHeader = Instance.new("Frame")
+                local UICorner_2 = Instance.new("UICorner")
+                local touch = Instance.new("ImageLabel")
+                local togName = Instance.new("TextLabel")
+                local viewInfo = Instance.new("ImageButton")
+                local colorCurrent = Instance.new("Frame")
+                local UICorner_3 = Instance.new("UICorner")
+                local UIListLayout = Instance.new("UIListLayout")
+                local colorInners = Instance.new("Frame")
+                local UICorner_4 = Instance.new("UICorner")
+                local rgb = Instance.new("ImageButton")
+                local UICorner_5 = Instance.new("UICorner")
+                local rbgcircle = Instance.new("ImageLabel")
+                local darkness = Instance.new("ImageButton")
+                local UICorner_6 = Instance.new("UICorner")
+                local darkcircle = Instance.new("ImageLabel")
+                local toggleDisabled = Instance.new("ImageLabel")
+                local toggleEnabled = Instance.new("ImageLabel")
+                local onrainbow = Instance.new("TextButton")
+                local togName_2 = Instance.new("TextLabel")
+                local elementStroke = CreateBorderStroke(colorElement, themeList.SchemeColor, 1, 0.8)
+
+                colorElement.Name = "colorElement"
+                colorElement.Parent = sectionInners
+                colorElement.BackgroundColor3 = themeList.ElementColor
+                colorElement.BackgroundTransparency = 0.25
+                colorElement.ClipsDescendants = true
+                colorElement.Size = UDim2.new(0, 352, 0, 34)
+                colorElement.AutoButtonColor = false
+                colorElement.Font = Enum.Font.SourceSans
+                colorElement.Text = ""
+
+                colorElement.MouseButton1Click:Connect(function()
+                    if not focusing then
+                        if colorOpened then
+                            colorOpened = false
+                            colorElement:TweenSize(UDim2.new(0, 352, 0, 34), "InOut", "Linear", 0.12)
+                            wait(0.12)
+                            updateSectionFrame()
+                            UpdateSize()
+                        else
+                            colorOpened = true
+                            colorElement:TweenSize(UDim2.new(0, 352, 0, 142), "InOut", "Linear", 0.12, true)
+                            wait(0.12)
+                            updateSectionFrame()
+                            UpdateSize()
+                        end
+                    else
+                        for i,v in next, infoContainer:GetChildren() do
+                            Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        end
+                        focusing = false
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                    end
+                end)
+
+                UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = colorElement
+
+                colorHeader.Name = "colorHeader"
+                colorHeader.Parent = colorElement
+                colorHeader.BackgroundColor3 = themeList.ElementColor
+                colorHeader.BackgroundTransparency = 1
+                colorHeader.Size = UDim2.new(0, 352, 0, 34)
+
+                UICorner_2.CornerRadius = UDim.new(0, 6)
+                UICorner_2.Parent = colorHeader
+                
+                touch.Name = "touch"
+                touch.Parent = colorHeader
+                touch.BackgroundTransparency = 1.000
+                touch.Position = UDim2.new(0.02, 0, 0.2, 0)
+                touch.Size = UDim2.new(0, 20, 0, 20)
+                touch.Image = "rbxassetid://3926305904"
+                touch.ImageColor3 = themeList.SchemeColor
+                touch.ImageRectOffset = Vector2.new(44, 964)
+                touch.ImageRectSize = Vector2.new(36, 36)
+
+                togName.Name = "togName"
+                togName.Parent = colorHeader
+                togName.BackgroundTransparency = 1.000
+                togName.Position = UDim2.new(0.095, 0, 0.25, 0)
+                togName.Size = UDim2.new(0, 288, 0, 16)
+                togName.Font = Enum.Font.GothamSemibold
+                togName.Text = colText
+                togName.TextColor3 = themeList.TextColor
+                togName.TextSize = 13.500
+                togName.RichText = true
+                togName.TextXAlignment = Enum.TextXAlignment.Left
+
+                local moreInfo = Instance.new("TextLabel")
+                local UICornerBox = Instance.new("UICorner")
+
+                moreInfo.Name = "TipMore"
+                moreInfo.Parent = infoContainer
+                moreInfo.BackgroundColor3 = themeList.ElementColor
+                moreInfo.BackgroundTransparency = 0.1
+                moreInfo.Position = UDim2.new(0, 0, 2, 0)
+                moreInfo.Size = UDim2.new(0, 353, 0, 33)
+                moreInfo.ZIndex = 9
+                moreInfo.Font = Enum.Font.GothamSemibold
+                moreInfo.Text = "  "..colInf
+                moreInfo.TextColor3 = themeList.TextColor
+                moreInfo.TextSize = 13.000
+                moreInfo.RichText = true
+                moreInfo.TextXAlignment = Enum.TextXAlignment.Left
+                CreateBorderStroke(moreInfo, themeList.SchemeColor, 1, 0.5)
+
+                UICornerBox.CornerRadius = UDim.new(0, 6)
+                UICornerBox.Parent = moreInfo
+
+                viewInfo.Name = "viewInfo"
+                viewInfo.Parent = colorHeader
+                viewInfo.BackgroundTransparency = 1.000
+                viewInfo.Position = UDim2.new(0.930000007, 0, 0.18, 0)
+                viewInfo.Size = UDim2.new(0, 20, 0, 20)
+                viewInfo.ZIndex = 2
+                viewInfo.Image = "rbxassetid://3926305904"
+                viewInfo.ImageColor3 = themeList.SchemeColor
+                viewInfo.ImageRectOffset = Vector2.new(764, 764)
+                viewInfo.ImageRectSize = Vector2.new(36, 36)
+
+                viewInfo.MouseButton1Click:Connect(function()
+                    if not viewDe then
+                        viewDe = true
+                        focusing = true
+                        for i,v in next, infoContainer:GetChildren() do
+                            if v ~= moreInfo then
+                                Utility:TweenObject(v, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                            end
+                        end
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,0,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 0.5}, 0.2)
+                        wait(1.5)
+                        focusing = false
+                        Utility:TweenObject(moreInfo, {Position = UDim2.new(0,0,2,0)}, 0.2)
+                        Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
+                        wait(0.2)
+                        viewDe = false
+                    end
+                end)   
+
+                colorCurrent.Name = "colorCurrent"
+                colorCurrent.Parent = colorHeader
+                colorCurrent.BackgroundColor3 = defcolor
+                colorCurrent.Position = UDim2.new(0.79, 0, 0.22, 0)
+                colorCurrent.Size = UDim2.new(0, 42, 0, 18)
+                CreateBorderStroke(colorCurrent, Color3.fromRGB(255,255,255), 1, 0.6)
+
+                UICorner_3.CornerRadius = UDim.new(0, 4)
+                UICorner_3.Parent = colorCurrent
+
+                UIListLayout.Parent = colorElement
+                UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                UIListLayout.Padding = UDim.new(0, 3)
+
+                colorInners.Name = "colorInners"
+                colorInners.Parent = colorElement
+                colorInners.BackgroundColor3 = themeList.ElementColor
+                colorInners.BackgroundTransparency = 0.4
+                colorInners.Position = UDim2.new(0, 0, 0.255, 0)
+                colorInners.Size = UDim2.new(0, 352, 0, 105)
+
+                UICorner_4.CornerRadius = UDim.new(0, 6)
+                UICorner_4.Parent = colorInners
+
+                rgb.Name = "rgb"
+                rgb.Parent = colorInners
+                rgb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                rgb.BackgroundTransparency = 1.000
+                rgb.Position = UDim2.new(0.02, 0, 0.05, 0)
+                rgb.Size = UDim2.new(0, 211, 0, 93)
+                rgb.Image = "http://www.roblox.com/asset/?id=6523286724"
+
+                UICorner_5.CornerRadius = UDim.new(0, 4)
+                UICorner_5.Parent = rgb
+
+                rbgcircle.Name = "rbgcircle"
+                rbgcircle.Parent = rgb
+                rbgcircle.BackgroundTransparency = 1.000
+                rbgcircle.Size = UDim2.new(0, 12, 0, 12)
+                rbgcircle.Image = "rbxassetid://3926309567"
+                rbgcircle.ImageColor3 = Color3.fromRGB(0, 0, 0)
+                rbgcircle.ImageRectOffset = Vector2.new(628, 420)
+                rbgcircle.ImageRectSize = Vector2.new(48, 48)
+
+                darkness.Name = "darkness"
+                darkness.Parent = colorInners
+                darkness.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                darkness.BackgroundTransparency = 1.000
+                darkness.Position = UDim2.new(0.64, 0, 0.05, 0)
+                darkness.Size = UDim2.new(0, 18, 0, 93)
+                darkness.Image = "http://www.roblox.com/asset/?id=6523291212"
+
+                UICorner_6.CornerRadius = UDim.new(0, 4)
+                UICorner_6.Parent = darkness
+
+                darkcircle.Name = "darkcircle"
+                darkcircle.Parent = darkness
+                darkcircle.AnchorPoint = Vector2.new(0.5, 0)
+                darkcircle.BackgroundTransparency = 1.000
+                darkcircle.Size = UDim2.new(0, 12, 0, 12)
+                darkcircle.Image = "rbxassetid://3926309567"
+                darkcircle.ImageColor3 = Color3.fromRGB(0, 0, 0)
+                darkcircle.ImageRectOffset = Vector2.new(628, 420)
+                darkcircle.ImageRectSize = Vector2.new(48, 48)
+
+                toggleDisabled.Name = "toggleDisabled"
+                toggleDisabled.Parent = colorInners
+                toggleDisabled.BackgroundTransparency = 1.000
+                toggleDisabled.Position = UDim2.new(0.71, 0, 0.065, 0)
+                toggleDisabled.Size = UDim2.new(0, 20, 0, 20)
+                toggleDisabled.Image = "rbxassetid://3926309567"
+                toggleDisabled.ImageColor3 = themeList.SchemeColor
+                toggleDisabled.ImageRectOffset = Vector2.new(628, 420)
+                toggleDisabled.ImageRectSize = Vector2.new(48, 48)
+
+                toggleEnabled.Name = "toggleEnabled"
+                toggleEnabled.Parent = colorInners
+                toggleEnabled.BackgroundTransparency = 1.000
+                toggleEnabled.Position = UDim2.new(0.71, 0, 0.065, 0)
+                toggleEnabled.Size = UDim2.new(0, 20, 0, 20)
+                toggleEnabled.Image = "rbxassetid://3926309567"
+                toggleEnabled.ImageColor3 = themeList.SchemeColor
+                toggleEnabled.ImageRectOffset = Vector2.new(784, 420)
+                toggleEnabled.ImageRectSize = Vector2.new(48, 48)
+                toggleEnabled.ImageTransparency = 1.000
+
+                onrainbow.Name = "onrainbow"
+                onrainbow.Parent = toggleEnabled
+                onrainbow.BackgroundTransparency = 1.000
+                onrainbow.Size = UDim2.new(1, 0, 1, 0)
+                onrainbow.Font = Enum.Font.SourceSans
+                onrainbow.Text = ""
+
+                togName_2.Name = "togName_2"
+                togName_2.Parent = colorInners
+                togName_2.BackgroundTransparency = 1.000
+                togName_2.Position = UDim2.new(0.78, 0, 0.08, 0)
+                togName_2.Size = UDim2.new(0, 278, 0, 14)
+                togName_2.Font = Enum.Font.GothamSemibold
+                togName_2.Text = "Rainbow"
+                togName_2.TextColor3 = themeList.TextColor
+                togName_2.TextSize = 13.000
+                togName_2.TextXAlignment = Enum.TextXAlignment.Left
+
+                local hovering = false
+                colorElement.MouseEnter:Connect(function()
+                    if not focusing then
+                        hovering = true
+                        Utility:TweenObject(colorElement, {BackgroundTransparency = 0.12}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.3}, 0.15)
+                    end 
+                end)
+                colorElement.MouseLeave:Connect(function()
+                    if not focusing then
+                        hovering = false
+                        Utility:TweenObject(colorElement, {BackgroundTransparency = 0.25}, 0.15)
+                        Utility:TweenObject(elementStroke, {Transparency = 0.8}, 0.15)
+                    end
+                end)        
+
+                coroutine.wrap(function()
+                    while wait() do
+                        if not hovering then
+                            colorElement.BackgroundColor3 = themeList.ElementColor
+                        end
+                        touch.ImageColor3 = themeList.SchemeColor
+                        togName.TextColor3 = themeList.TextColor
+                        moreInfo.BackgroundColor3 = themeList.ElementColor
+                        moreInfo.TextColor3 = themeList.TextColor
+                        viewInfo.ImageColor3 = themeList.SchemeColor
+                        colorInners.BackgroundColor3 = themeList.ElementColor
+                        toggleDisabled.ImageColor3 = themeList.SchemeColor
+                        toggleEnabled.ImageColor3 = themeList.SchemeColor
+                        togName_2.TextColor3 = themeList.TextColor
+                    end
+                end)()
+
+                updateSectionFrame()
+                UpdateSize()
+
+                local uis = game:GetService('UserInputService')
+                local rs = game:GetService("RunService")
+                local colorpicker = false
+                local darknesss = false
+                local colorData = {1,1,1}
+                local rainbow = false
+                local rainbowconnection
+                local counter = 0
+                
+                local function zigzag(X) 
+                    return math.acos(math.cos(X*math.pi))/math.pi 
+                end
+
+                local function cp()
+                    if colorpicker then
+                        local x = math.clamp(mouse.X - rgb.AbsolutePosition.X, 0, rgb.AbsoluteSize.X) / rgb.AbsoluteSize.X
+                        local y = math.clamp(mouse.Y - rgb.AbsolutePosition.Y, 0, rgb.AbsoluteSize.Y) / rgb.AbsoluteSize.Y
+                        
+                        rbgcircle.Position = UDim2.new(x, -6, y, -6)
+                        colorData = {1-x, 1-y, colorData[3]}
+                        local realcolor = Color3.fromHSV(colorData[1], colorData[2], colorData[3])
+                        colorCurrent.BackgroundColor3 = realcolor
+                        callback(realcolor)
+                    end
+                    if darknesss then
+                        local y = math.clamp(mouse.Y - darkness.AbsolutePosition.Y, 0, darkness.AbsoluteSize.Y) / darkness.AbsoluteSize.Y
+                        darkcircle.Position = UDim2.new(0.5, 0, y, -6)
+                        colorData = {colorData[1], colorData[2], 1-y}
+                        local realcolor = Color3.fromHSV(colorData[1], colorData[2], colorData[3])
+                        colorCurrent.BackgroundColor3 = realcolor
+                        callback(realcolor)
+                    end
+                end
+
+                local function setcolor(tbl)
+                    colorData = {tbl[1], tbl[2], tbl[3]}
+                    rbgcircle.Position = UDim2.new(colorData[1], -6, colorData[2]-1, -6)
+                    darkcircle.Position = UDim2.new(0.5, 0, colorData[3]-1, -6)
+                    local realcolor = Color3.fromHSV(colorData[1], colorData[2], colorData[3])
+                    colorCurrent.BackgroundColor3 = realcolor
+                end
+
+                local function setrgbcolor(tbl)
+                    colorData = {tbl[1], tbl[2], colorData[3]}
+                    rbgcircle.Position = UDim2.new(colorData[1], -6, colorData[2]-1, -6)
+                    local realcolor = Color3.fromHSV(colorData[1], colorData[2], colorData[3])
+                    colorCurrent.BackgroundColor3 = realcolor
+                    callback(realcolor)
+                end
+
+                local function togglerainbow()
+                    if rainbow then
+                        tween:Create(toggleEnabled, tweeninfo(0.12, Enum.EasingStyle.Linear), {ImageTransparency = 1}):Play()
+                        rainbow = false
+                        if rainbowconnection then rainbowconnection:Disconnect() end
+                    else
+                        tween:Create(toggleEnabled, tweeninfo(0.12, Enum.EasingStyle.Linear), {ImageTransparency = 0}):Play()
+                        rainbow = true
+                        rainbowconnection = rs.RenderStepped:Connect(function()
+                            setrgbcolor({zigzag(counter), 1, 1})
+                            counter = counter + 0.005
+                        end)
+                    end
+                end
+
+                onrainbow.MouseButton1Click:Connect(togglerainbow)
+                mouse.Move:Connect(cp)
+                rgb.MouseButton1Down:Connect(function() colorpicker = true end)
+                darkness.MouseButton1Down:Connect(function() darknesss = true end)
+                
+                uis.InputEnded:Connect(function(inputObj)
+                    if inputObj.UserInputType == Enum.UserInputType.MouseButton1 then
+                        darknesss = false
+                        colorpicker = false
+                    end
+                end)
+                setcolor({h, s, v})
+            end
+            
+            -- ==== HÀM TẠO NHÃN LABEL MỚI ====
+            function Elements:NewLabel(titleText)
+            	local labelFunctions = {}
+            	local label = Instance.new("TextLabel")
+            	local UICorner = Instance.new("UICorner")
+                local labelStroke = CreateBorderStroke(label, themeList.SchemeColor, 1, 0.8)
+
+            	label.Name = "label"
+            	label.Parent = sectionInners
+            	label.BackgroundColor3 = themeList.ElementColor
+                label.BackgroundTransparency = 0.5
+            	label.BorderSizePixel = 0
+				label.ClipsDescendants = true
+            	label.Text = "  " .. titleText
+           		label.Size = UDim2.new(0, 352, 0, 30)
+	            label.Font = Enum.Font.GothamSemibold
+	            label.RichText = true
+	            label.TextColor3 = themeList.SchemeColor
+	            Objects[label] = "TextColor3"
+	            label.TextSize = 13.000
+	            label.TextXAlignment = Enum.TextXAlignment.Left
+	            
+	           	UICorner.CornerRadius = UDim.new(0, 6)
+                UICorner.Parent = label
+            	
+		        coroutine.wrap(function()
+		            while wait() do
+		                label.TextColor3 = themeList.SchemeColor
+		            end
+		        end)()
+
+                updateSectionFrame()
+                UpdateSize()
+
+                function labelFunctions:UpdateLabel(newText)
+                	if label.Text ~= "  "..newText then
+                		label.Text = "  "..newText
+                	end
+                end	
+                return labelFunctions
+            end	
+
+            return Elements
+        end
+        return Sections
+    end  
+    return Tabs
+end
+
+return Kavo
+
+```
