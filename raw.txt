@@ -29,48 +29,48 @@ local p=o:GetMouse()
 local q=(gethui or function() return g.CoreGui end) ()
 
 
--- [1] THEME & MÀU SẮC (AURORA GLASS — PREMIUM EDITION)
+-- [1] THEME & MÀU SẮC (GRAPHITE GLASS — MONOCHROME PREMIUM EDITION)
 local r={
 Aurora={
 Colors={
 Background=ColorSequence.new{
-ColorSequenceKeypoint.new(0.00,Color3.fromRGB(18,16,32)),
-ColorSequenceKeypoint.new(0.50,Color3.fromRGB(24,22,44)),
-ColorSequenceKeypoint.new(1.00,Color3.fromRGB(14,12,26))
+ColorSequenceKeypoint.new(0.00,Color3.fromRGB(26,26,28)),
+ColorSequenceKeypoint.new(0.50,Color3.fromRGB(34,34,36)),
+ColorSequenceKeypoint.new(1.00,Color3.fromRGB(20,20,22))
 },
-Primary=Color3.fromRGB(140,110,255),
-OnPrimary=Color3.fromRGB(78,62,168),
-ScrollBar=Color3.fromRGB(140,110,255),
-Stroke=Color3.fromRGB(90,80,150),
+Primary=Color3.fromRGB(220,220,225),
+OnPrimary=Color3.fromRGB(30,30,32),
+ScrollBar=Color3.fromRGB(180,180,185),
+Stroke=Color3.fromRGB(90,90,95),
 
-Error=Color3.fromRGB(255,120,140),
-Icons=Color3.fromRGB(235,232,255),
+Error=Color3.fromRGB(230,120,120),
+Icons=Color3.fromRGB(235,235,238),
 
-JoinButton=Color3.fromRGB(72,200,140),
-Link=Color3.fromRGB(120,200,255),
+JoinButton=Color3.fromRGB(200,200,205),
+Link=Color3.fromRGB(200,200,205),
 
 Dialog={
-Background=Color3.fromRGB(22,20,38)
+Background=Color3.fromRGB(28,28,30)
 },
 Buttons={
-Holding=Color3.fromRGB(36,32,60),
-Default=Color3.fromRGB(28,26,48)
+Holding=Color3.fromRGB(58,58,62),
+Default=Color3.fromRGB(42,42,46)
 },
 Border={
-Holding=Color3.fromRGB(160,130,255),
-Default=Color3.fromRGB(70,60,110),
+Holding=Color3.fromRGB(210,210,215),
+Default=Color3.fromRGB(78,78,84),
 },
 Text={
-Default=Color3.fromRGB(245,242,255),
-Dark=Color3.fromRGB(205,200,225),
-Darker=Color3.fromRGB(165,160,190),
+Default=Color3.fromRGB(245,245,248),
+Dark=Color3.fromRGB(200,200,205),
+Darker=Color3.fromRGB(150,150,155),
 },
 Slider={
-SliderBar=Color3.fromRGB(140,110,255),
-SliderNumber=Color3.fromRGB(245,242,255),
+SliderBar=Color3.fromRGB(220,220,225),
+SliderNumber=Color3.fromRGB(245,245,248),
 },
 Dropdown={
-Holder=Color3.fromRGB(22,20,40),
+Holder=Color3.fromRGB(30,30,34),
 }
 },
 Icons={
@@ -92,48 +92,48 @@ Bold=Enum.Font.GothamBold,
 ExtraBold=Enum.Font.GothamBlack,
 SliderValue=Enum.Font.GothamBold
 },
-BackgroundTransparency=0.55 -- KÍNH MỜ / GLASSMORPHISM
+BackgroundTransparency=0.42 -- KÍNH MỜ GRAPHITE
 },
 Darker={
 Colors={
 Background=ColorSequence.new{
-ColorSequenceKeypoint.new(0.00,Color3.fromRGB(20,20,26)),
-ColorSequenceKeypoint.new(0.50,Color3.fromRGB(28,28,36)),
-ColorSequenceKeypoint.new(1.00,Color3.fromRGB(16,16,22))
+ColorSequenceKeypoint.new(0.00,Color3.fromRGB(14,14,16)),
+ColorSequenceKeypoint.new(0.50,Color3.fromRGB(20,20,22)),
+ColorSequenceKeypoint.new(1.00,Color3.fromRGB(10,10,12))
 },
-Primary=Color3.fromRGB(255,200,120),
-OnPrimary=Color3.fromRGB(168,120,60),
-ScrollBar=Color3.fromRGB(255,200,120),
-Stroke=Color3.fromRGB(60,58,70),
+Primary=Color3.fromRGB(240,240,245),
+OnPrimary=Color3.fromRGB(24,24,26),
+ScrollBar=Color3.fromRGB(200,200,205),
+Stroke=Color3.fromRGB(70,70,74),
 
-Error=Color3.fromRGB(255,120,120),
-Icons=Color3.fromRGB(240,238,235),
+Error=Color3.fromRGB(230,120,120),
+Icons=Color3.fromRGB(240,240,243),
 
-JoinButton=Color3.fromRGB(64,180,110),
-Link=Color3.fromRGB(120,190,255),
+JoinButton=Color3.fromRGB(210,210,215),
+Link=Color3.fromRGB(210,210,215),
 
 Dialog={
-Background=Color3.fromRGB(24,24,30)
+Background=Color3.fromRGB(18,18,20)
 },
 Buttons={
-Holding=Color3.fromRGB(40,40,50),
-Default=Color3.fromRGB(30,30,38)
+Holding=Color3.fromRGB(46,46,50),
+Default=Color3.fromRGB(30,30,34)
 },
 Border={
-Holding=Color3.fromRGB(255,200,120),
-Default=Color3.fromRGB(52,52,62),
+Holding=Color3.fromRGB(230,230,235),
+Default=Color3.fromRGB(64,64,68),
 },
 Text={
-Default=Color3.fromRGB(255,255,255),
-Dark=Color3.fromRGB(210,210,215),
-Darker=Color3.fromRGB(175,175,180),
+Default=Color3.fromRGB(250,250,252),
+Dark=Color3.fromRGB(205,205,210),
+Darker=Color3.fromRGB(155,155,160),
 },
 Slider={
-SliderBar=Color3.fromRGB(255,200,120),
-SliderNumber=Color3.fromRGB(245,242,235),
+SliderBar=Color3.fromRGB(240,240,245),
+SliderNumber=Color3.fromRGB(250,250,252),
 },
 Dropdown={
-Holder=Color3.fromRGB(24,24,32),
+Holder=Color3.fromRGB(22,22,26),
 }
 },
 Icons={
@@ -155,7 +155,7 @@ Bold=Enum.Font.GothamBold,
 ExtraBold=Enum.Font.GothamBlack,
 SliderValue=Enum.Font.GothamBold
 },
-BackgroundTransparency=0.5
+BackgroundTransparency=0.4
 }
 }
 
@@ -316,13 +316,13 @@ local G={} do
 G.ElementsTable={
 Corner=function(H)
 return E("UICorner",{
-CornerRadius=H or UDim.new(0,14)
+CornerRadius=H or UDim.new(0,18)
 })
 end,
 Stroke=function(H,I)
 return E("UIStroke",{
-Color=H or Color3.fromRGB(120,110,180),
-Thickness=I or 1.4
+Color=H or Color3.fromRGB(110,110,118),
+Thickness=I or 1.2
 })
 end,
 Image=function(H)
@@ -4066,22 +4066,52 @@ end
 end
 
 local ak=E("Frame","Window",I,{
-Position=UDim2.new(0.5,-ah.X.Offset/2,0.5,-ah.Y.Offset/2),
+Position=UDim2.fromScale(0.5,0.5),
+AnchorPoint=Vector2.new(0.5,0.5),
 Active=true,
 Size=ah,
 ThemeTag={
 BackgroundTransparency="BackgroundTransparency"
 },
 Elements={
-Corner=UDim.new(0,8),
+Corner=UDim.new(0,22),
+Stroke={
+Thickness=1.2,
+Transparency=0.25,
+ThemeTag={
+Color="Colors.Border.Default"
+}
+},
 Gradient={
-Rotation=45,
+Rotation=120,
 ThemeTag={
 Color="Colors.Background"
 }
 }
 }
 })
+
+-- INTRO ANIMATION: smooth scale + fade in (không phải bật một phát)
+do
+local _targetSize=ah
+local _themeTransparency=s.CurrentTheme and s.CurrentTheme.BackgroundTransparency or 0.42
+ak.Size=UDim2.fromOffset(math.floor(_targetSize.X.Offset*0.86),math.floor(_targetSize.Y.Offset*0.86))
+ak.BackgroundTransparency=1
+local _stroke=ak:FindFirstChildOfClass("UIStroke")
+if _stroke then _stroke.Transparency=1 end
+task.spawn(function()
+task.wait(0.02)
+j:Create(ak,TweenInfo.new(0.55,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+Size=_targetSize,
+BackgroundTransparency=_themeTransparency
+}):Play()
+if _stroke then
+j:Create(_stroke,TweenInfo.new(0.7,Enum.EasingStyle.Quint,Enum.EasingDirection.Out),{
+Transparency=0.25
+}):Play()
+end
+end)
+end
 
 u(ak.Destroying,function()
 self:Destroy()
